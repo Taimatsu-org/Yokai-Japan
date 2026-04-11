@@ -1,0 +1,13 @@
+{
+  "name": "yokai-japan",
+  "version": "1.0.0",
+  "description": "YOKAI JAPAN - Custom scripts for Webflow site",
+  "scripts": {
+    "build": "node build.js",
+    "watch": "node build.js --watch"
+  },
+  "devDependencies": {
+    "esbuild": "^0.20.0",
+    "sharp": "^0.34.5"
+  }
+}
