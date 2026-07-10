@@ -511,6 +511,7 @@
       document.querySelector("#buy-context");
     if (buyContext && product.shopifyHandle) {
       buyContext.setAttribute("handle", product.shopifyHandle);
+      buyContext.removeAttribute("shopify-content-loaded"); // 清掉已載入標記
     }
   }
 
