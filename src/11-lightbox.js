@@ -506,6 +506,12 @@
       (line, i) => (line.style.display = i < count ? "" : "none"),
     );
     resetSlideLines();
+    var buyContext =
+      overlay.querySelector("#buy-context") ||
+      document.querySelector("#buy-context");
+    if (buyContext && product.shopifyHandle) {
+      buyContext.setAttribute("handle", product.shopifyHandle);
+    }
   }
 
   function initWebGL() {
