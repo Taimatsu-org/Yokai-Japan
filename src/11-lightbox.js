@@ -61,6 +61,11 @@
   var productWrappers = document.querySelectorAll(".product-wrapper");
   var newsRows = document.querySelectorAll(".news-row");
 
+  var buyContextTemplate = (function () {
+    var c = document.querySelector("#buy-context");
+    return c ? c.innerHTML : "";
+  })();
+
   var mode = null;
   var productIndex = 0;
   var slideIndex = 0;
@@ -506,10 +511,6 @@
       (line, i) => (line.style.display = i < count ? "" : "none"),
     );
     resetSlideLines();
-    var buyContextTemplate = (function () {
-      var c = document.querySelector("#buy-context");
-      return c ? c.innerHTML : "";
-    })();
     var oldCtx =
       overlay.querySelector("#buy-context") ||
       document.querySelector("#buy-context");
