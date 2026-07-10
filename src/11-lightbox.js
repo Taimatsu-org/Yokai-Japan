@@ -506,12 +506,17 @@
       (line, i) => (line.style.display = i < count ? "" : "none"),
     );
     resetSlideLines();
-    var buyContext =
+    var oldCtx =
       overlay.querySelector("#buy-context") ||
       document.querySelector("#buy-context");
-    if (buyContext && product.shopifyHandle) {
-      buyContext.setAttribute("handle", product.shopifyHandle);
-      buyContext.removeAttribute("shopify-content-loaded"); // 清掉已載入標記
+    if (oldCtx && product.shopifyHandle) {
+      var parent = oldCtx.parentNode;
+      var fresh = document.createElement("shopify-context");
+      fresh.id = "buy-context";
+      fresh.setAttribute("type", "product");
+      fresh.setAttribute("handle", product.shopifyHandle);
+      fresh.innerHTML = oldCtx.innerHTML;
+      parent.replaceChild(fresh, oldCtx);
     }
   }
 
