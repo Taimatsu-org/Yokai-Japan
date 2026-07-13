@@ -512,7 +512,6 @@
         c.style.display = "none";
         if (c.__homeCard) c.__homeCard.appendChild(c);
       });
-
       var ctx = document.querySelector(
         '.product-buy-context[handle="' + product.shopifyHandle + '"]',
       );
