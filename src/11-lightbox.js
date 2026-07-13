@@ -511,17 +511,21 @@
       (line, i) => (line.style.display = i < count ? "" : "none"),
     );
     resetSlideLines();
-    var oldCtx =
-      overlay.querySelector("#buy-context") ||
-      document.querySelector("#buy-context");
-    if (oldCtx && product.shopifyHandle) {
-      var parent = oldCtx.parentNode;
-      var fresh = document.createElement("shopify-context");
-      fresh.id = "buy-context";
-      fresh.setAttribute("type", "product");
-      fresh.setAttribute("handle", product.shopifyHandle);
-      fresh.innerHTML = buyContextTemplate;
-      parent.replaceChild(fresh, oldCtx);
+    var buySlot = overlay.querySelector(".buy");
+    if (buySlot) {
+      var prev = buySlot.querySelector(".product-buy-context");
+      if (prev && prev.__homeCard) {
+        prev.style.display = "none";
+        prev.__homeCard.appendChild(prev);
+      }
+      var ctx = productWrappers[productIndex]?.querySelector(
+        ".product-buy-context",
+      );
+      if (ctx) {
+        if (!ctx.__homeCard) ctx.__homeCard = ctx.parentElement;
+        buySlot.appendChild(ctx);
+        ctx.style.display = "";
+      }
     }
   }
 
@@ -678,6 +682,11 @@
       switching = false;
       mode = null;
       destroyPopupLenis();
+      var used = overlay.querySelector(".buy .product-buy-context");
+      if (used && used.__homeCard) {
+        used.style.display = "none";
+        used.__homeCard.appendChild(used);
+      }
     }, CLOSE_DELAY);
   }
 
