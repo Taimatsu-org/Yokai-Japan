@@ -507,10 +507,6 @@
       (line, i) => (line.style.display = i < count ? "" : "none"),
     );
     resetSlideLines();
-    var buySlot = overlay.querySelector(".buy");
-    if (buySlot && product.shopifyProductId) {
-      window.renderBuyButton(product.shopifyProductId, buySlot);
-    }
   }
 
   function initWebGL() {
@@ -673,6 +669,8 @@
       switching = false;
       mode = null;
       destroyPopupLenis();
+      var buySlot = overlay.querySelector(".buy");
+      if (buySlot) buySlot.innerHTML = "";
     }, CLOSE_DELAY);
   }
 
