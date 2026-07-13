@@ -622,6 +622,13 @@
         ((closeBtn.style.transition = "opacity 700ms " + EASE_CONTENT),
         (closeBtn.style.opacity = "1"));
       overlay.classList.add("content-visible");
+      if (popupMode === "product") {
+        var buySlot = overlay.querySelector(".buy");
+        var p = products[index];
+        if (buySlot && p.shopifyProductId && window.renderBuyButton) {
+          window.renderBuyButton(p.shopifyProductId, buySlot);
+        }
+      }
       setTimeout(() => {
         content && (content.style.transition = "");
         closeBtn && (closeBtn.style.transition = "");
@@ -702,6 +709,11 @@
       productIndex = newIndex;
       slideIndex = 0;
       populateProduct(products[productIndex]);
+      var buySlot = overlay.querySelector(".buy");
+      var p = products[productIndex];
+      if (buySlot && p.shopifyProductId && window.renderBuyButton) {
+        window.renderBuyButton(p.shopifyProductId, buySlot);
+      }
       destroyPopupLenis();
       var pcr = productContent?.querySelector(".popup--content-right");
       if (pcr) createPopupLenis(pcr);
