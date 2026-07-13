@@ -61,11 +61,6 @@
   var productWrappers = document.querySelectorAll(".product-wrapper");
   var newsRows = document.querySelectorAll(".news-row");
 
-  var buyContextTemplate = (function () {
-    var c = document.querySelector("#buy-context");
-    return c ? c.innerHTML : "";
-  })();
-
   var mode = null;
   var productIndex = 0;
   var slideIndex = 0;
@@ -673,11 +668,6 @@
       switching = false;
       mode = null;
       destroyPopupLenis();
-      var used = overlay.querySelector(".buy .product-buy-context");
-      if (used && used.__homeCard) {
-        used.style.display = "none";
-        used.__homeCard.appendChild(used);
-      }
     }, CLOSE_DELAY);
     document.querySelectorAll(".product-buy-context").forEach(function (c) {
       c.classList.remove("is-in-modal");
