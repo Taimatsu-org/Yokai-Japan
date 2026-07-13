@@ -358,6 +358,7 @@
       sku: el.dataset.sku || "",
       size: el.dataset.size || "",
       shopifyHandle: el.dataset.shopifyHandle || "",
+      shopifyProductId: el.dataset.shopifyProductId || "",
     };
   });
 
@@ -507,19 +508,8 @@
     );
     resetSlideLines();
     var buySlot = overlay.querySelector(".buy");
-    if (buySlot && product.shopifyHandle) {
-      buySlot.querySelectorAll(".product-buy-context").forEach(function (c) {
-        c.style.display = "none";
-        if (c.__homeCard) c.__homeCard.appendChild(c);
-      });
-      var ctx = document.querySelector(
-        '.product-buy-context[handle="' + product.shopifyHandle + '"]',
-      );
-      if (ctx) {
-        if (!ctx.__homeCard) ctx.__homeCard = ctx.parentElement;
-        buySlot.appendChild(ctx);
-        ctx.style.display = "";
-      }
+    if (buySlot && product.shopifyProductId) {
+      window.renderBuyButton(product.shopifyProductId, buySlot);
     }
   }
 
@@ -677,10 +667,6 @@
       mode = null;
       destroyPopupLenis();
     }, CLOSE_DELAY);
-    overlay.querySelectorAll(".buy .product-buy-context").forEach(function (c) {
-      c.style.display = "none";
-      if (c.__homeCard) c.__homeCard.appendChild(c);
-    });
   }
 
   function switchProduct(newIndex) {
