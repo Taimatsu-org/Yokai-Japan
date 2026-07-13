@@ -506,13 +506,22 @@
       (line, i) => (line.style.display = i < count ? "" : "none"),
     );
     resetSlideLines();
-    document.querySelectorAll(".product-buy-context").forEach(function (c) {
-      c.classList.remove("is-in-modal");
-    });
-    var ctx = productWrappers[productIndex]?.querySelector(
-      ".product-buy-context",
-    );
-    if (ctx) ctx.classList.add("is-in-modal");
+    var buySlot = overlay.querySelector(".buy");
+    if (buySlot) {
+      var prev = buySlot.querySelector(".product-buy-context");
+      if (prev && prev.__homeCard) {
+        prev.style.display = "none";
+        prev.__homeCard.appendChild(prev);
+      }
+      var ctx = productWrappers[productIndex]?.querySelector(
+        ".product-buy-context",
+      );
+      if (ctx) {
+        if (!ctx.__homeCard) ctx.__homeCard = ctx.parentElement;
+        buySlot.appendChild(ctx);
+        ctx.style.display = "";
+      }
+    }
   }
 
   function initWebGL() {
@@ -669,9 +678,11 @@
       mode = null;
       destroyPopupLenis();
     }, CLOSE_DELAY);
-    document.querySelectorAll(".product-buy-context").forEach(function (c) {
-      c.classList.remove("is-in-modal");
-    });
+    var used = overlay.querySelector(".buy .product-buy-context");
+    if (used && used.__homeCard) {
+      used.style.display = "none";
+      used.__homeCard.appendChild(used);
+    }
   }
 
   function switchProduct(newIndex) {
