@@ -506,9 +506,11 @@
       (line, i) => (line.style.display = i < count ? "" : "none"),
     );
     var data = window.getProduct(product.shopifyHandle);
+    var mTitle = overlay.querySelector("[data-modal-buy] [data-shopify-title]");
     var mPrice = overlay.querySelector("[data-modal-buy] [data-price]");
     var mBtn = overlay.querySelector("[data-modal-buy] [data-add]");
     if (data) {
+      if (mTitle) mTitle.textContent = data.title;
       if (mPrice)
         mPrice.textContent =
           "¥" + Math.round(Number(data.price)).toLocaleString();
