@@ -840,8 +840,8 @@
     .filter(Boolean);
   if (handles.length && window.fetchProducts) {
     window.fetchProducts(handles).then(function () {
-      productWrappers.forEach(function (el) {
-        var data = window.getProduct(el.dataset.shopifyHandle);
+      document.querySelectorAll(".card-buy").forEach(function (el) {
+        var data = window.getProduct(el.dataset.handle);
         if (!data) return;
         var priceEl = el.querySelector("[data-price]");
         var btn = el.querySelector("[data-add]");
