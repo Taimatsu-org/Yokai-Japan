@@ -358,7 +358,6 @@
       sku: el.dataset.sku || "",
       size: el.dataset.size || "",
       shopifyHandle: el.dataset.shopifyHandle || "",
-      shopifyProductId: el.dataset.shopifyProductId || "",
     };
   });
 
@@ -506,6 +505,19 @@
     slideLines.forEach(
       (line, i) => (line.style.display = i < count ? "" : "none"),
     );
+    var data = window.getProduct(product.shopifyHandle);
+    var mPrice = overlay.querySelector("[data-modal-buy] [data-price]");
+    var mBtn = overlay.querySelector("[data-modal-buy] [data-add]");
+    if (data) {
+      if (mPrice)
+        mPrice.textContent =
+          "¥" + Math.round(Number(data.price)).toLocaleString();
+      if (mBtn) {
+        mBtn.dataset.variantId = data.variantId;
+        mBtn.disabled = !data.available;
+        mBtn.textContent = data.available ? "カートに入れる" : "売り切れ";
+      }
+    }
     resetSlideLines();
   }
 
@@ -618,13 +630,6 @@
         ((closeBtn.style.transition = "opacity 700ms " + EASE_CONTENT),
         (closeBtn.style.opacity = "1"));
       overlay.classList.add("content-visible");
-      if (popupMode === "product") {
-        var buySlot = overlay.querySelector(".buy");
-        var p = products[index];
-        if (buySlot && p.shopifyProductId && window.renderBuyButton) {
-          window.renderBuyButton(p.shopifyProductId, buySlot);
-        }
-      }
       setTimeout(() => {
         content && (content.style.transition = "");
         closeBtn && (closeBtn.style.transition = "");
@@ -669,8 +674,6 @@
       switching = false;
       mode = null;
       destroyPopupLenis();
-      var buySlot = overlay.querySelector(".buy");
-      if (buySlot) buySlot.innerHTML = "";
     }, CLOSE_DELAY);
   }
 
@@ -707,11 +710,6 @@
       productIndex = newIndex;
       slideIndex = 0;
       populateProduct(products[productIndex]);
-      var buySlot = overlay.querySelector(".buy");
-      var p = products[productIndex];
-      if (buySlot && p.shopifyProductId && window.renderBuyButton) {
-        window.renderBuyButton(p.shopifyProductId, buySlot);
-      }
       destroyPopupLenis();
       var pcr = productContent?.querySelector(".popup--content-right");
       if (pcr) createPopupLenis(pcr);
@@ -831,6 +829,39 @@
       ev.preventDefault();
       openPopup("news", index);
     });
+  });
+
+  var handles = products
+    .map(function (p) {
+      return p.shopifyHandle;
+    })
+    .filter(Boolean);
+  if (handles.length && window.fetchProducts) {
+    window.fetchProducts(handles).then(function () {
+      productWrappers.forEach(function (el) {
+        var data = window.getProduct(el.dataset.shopifyHandle);
+        if (!data) return;
+        var priceEl = el.querySelector("[data-price]");
+        var btn = el.querySelector("[data-add]");
+        if (priceEl)
+          priceEl.textContent =
+            "¥" + Math.round(Number(data.price)).toLocaleString();
+        if (btn) {
+          btn.dataset.variantId = data.variantId;
+          btn.disabled = !data.available;
+          btn.textContent = data.available ? "カートに入れる" : "売り切れ";
+        }
+      });
+    });
+  }
+
+  document.addEventListener("click", function (ev) {
+    var btn = ev.target.closest("[data-add]");
+    if (!btn) return;
+    ev.stopPropagation();
+    if (window.Cart && btn.dataset.variantId) {
+      window.Cart.add(btn.dataset.variantId);
+    }
   });
 
   window.lightbox = {
