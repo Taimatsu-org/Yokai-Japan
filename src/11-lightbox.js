@@ -845,6 +845,8 @@
         if (!data) return;
         var priceEl = el.querySelector("[data-price]");
         var btn = el.querySelector("[data-add]");
+        var imgEl = el.querySelector("[data-image]");
+        if (imgEl && data.image) imgEl.src = data.image;
         if (priceEl)
           priceEl.textContent =
             "¥" + Math.round(Number(data.price)).toLocaleString();
