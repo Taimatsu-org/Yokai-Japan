@@ -41,7 +41,9 @@
         return `p${i}: product(handle: "${h}") {
       title
       images(first: 1) { edges { node { url } } }
-      variants(first: 1) { edges { node { id price { amount } availableForSale } } }
+      variants(first: 20) { edges { node {
+        id title price { amount } availableForSale image { url }
+      } } }
     }`;
       })
       .join("\n");
@@ -50,13 +52,29 @@
       handles.forEach(function (h, i) {
         var p = d?.data?.["p" + i];
         if (!p) return;
-        var v = p.variants?.edges?.[0]?.node;
+        var vs = (p.variants?.edges || []).map(function (e) {
+          var v = e.node;
+          return {
+            id: v.id,
+            title: v.title,
+            price: v.price?.amount || "",
+            available: v.availableForSale !== false,
+            image: v.image?.url || "",
+          };
+        });
+        var first =
+          vs.find(function (v) {
+            return v.available;
+          }) ||
+          vs[0] ||
+          {};
         productCache[h] = {
           title: p.title,
           image: p.images?.edges?.[0]?.node?.url || "",
-          price: v?.price?.amount || "",
-          variantId: v?.id || "",
-          available: v?.availableForSale !== false,
+          variants: vs,
+          price: first.price || "",
+          variantId: first.id || "",
+          available: first.available !== false,
         };
       });
       window.dispatchEvent(new Event("shopify-products-ready"));
