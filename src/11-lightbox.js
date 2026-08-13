@@ -505,20 +505,70 @@
     slideLines.forEach(
       (line, i) => (line.style.display = i < count ? "" : "none"),
     );
-    var data = window.getProduct(product.shopifyHandle);
+    var data = window.getProduct && window.getProduct(product.shopifyHandle);
     var mTitle = overlay.querySelector("[data-modal-buy] [data-shopify-title]");
     var mPrice = overlay.querySelector("[data-modal-buy] [data-price]");
     var mBtn = overlay.querySelector("[data-modal-buy] [data-add]");
+    var mOpts = overlay.querySelector(
+      "[data-modal-buy] [data-variant-options]",
+    );
     if (data) {
       if (mTitle) mTitle.textContent = data.title;
-      if (mPrice)
-        mPrice.textContent =
-          "¥" + Math.round(Number(data.price)).toLocaleString();
-      if (mBtn) {
-        mBtn.dataset.variantId = data.variantId;
-        mBtn.disabled = !data.available;
-        mBtn.textContent = data.available ? "カートに入れる" : "売り切れ";
+      var variants =
+        data.variants && data.variants.length
+          ? data.variants
+          : [
+              {
+                id: data.variantId,
+                title: "",
+                price: data.price,
+                available: data.available,
+                image: "",
+              },
+            ];
+      var selectVariant = function (v, swapImage) {
+        if (mPrice)
+          mPrice.textContent =
+            "¥" + Math.round(Number(v.price)).toLocaleString();
+        if (mBtn) {
+          mBtn.dataset.variantId = v.id;
+          mBtn.disabled = !v.available;
+          mBtn.textContent = v.available ? "カートに入れる" : "売り切れ";
+        }
+        if (swapImage && v.image && galleryImg1) {
+          autoplayTween && (autoplayTween.kill(), (autoplayTween = null));
+          galleryImg1.src = v.image;
+          galleryImg1.alt = data.title + " " + v.title;
+          gsap.set(galleryImg1, { opacity: 1 });
+        }
+      };
+      var initial =
+        variants.find(function (v) {
+          return v.available;
+        }) || variants[0];
+      if (mOpts) {
+        mOpts.innerHTML = "";
+        if (variants.length > 1) {
+          variants.forEach(function (v) {
+            var b = document.createElement("button");
+            b.type = "button";
+            b.className =
+              "variant-option" + (v === initial ? " is-selected" : "");
+            b.textContent = v.title;
+            if (!v.available) b.classList.add("is-soldout");
+            b.addEventListener("click", function (ev) {
+              ev.stopPropagation();
+              mOpts.querySelectorAll(".variant-option").forEach(function (x) {
+                x.classList.remove("is-selected");
+              });
+              b.classList.add("is-selected");
+              selectVariant(v, true);
+            });
+            mOpts.appendChild(b);
+          });
+        }
       }
+      selectVariant(initial, false);
     }
     resetSlideLines();
   }
