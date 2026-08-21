@@ -785,7 +785,10 @@
 
   productWrappers.forEach((el, i) => {
     el.style.cursor = "pointer";
-    el.addEventListener("click", () => openPopup("product", i));
+    el.addEventListener("click", (ev) => {
+      if (ev.target.closest("[data-add], .card-add")) return;
+      openPopup("product", i);
+    });
   });
   newsRows.forEach((el, i) => {
     el.style.cursor = "pointer";
@@ -888,8 +891,6 @@
         if (!data) return;
         var priceEl = el.querySelector("[data-price]");
         var btn = el.querySelector("[data-add]");
-        var imgEl = el.querySelector("[data-image]");
-        if (imgEl && data.image) imgEl.src = data.image;
         if (priceEl)
           priceEl.textContent =
             "¥" + Math.round(Number(data.price)).toLocaleString();
