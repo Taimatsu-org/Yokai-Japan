@@ -886,30 +886,30 @@
     .filter(Boolean);
   if (handles.length && window.fetchProducts) {
     window.fetchProducts(handles).then(function () {
-      document.querySelectorAll(".card-buy").forEach(function (el) {
-        var data = window.getProduct(el.dataset.handle);
-        if (!data) return;
-        var priceEl = el.querySelector("[data-price]");
-        var btn = el.querySelector("[data-add]");
-        if (priceEl)
-          priceEl.textContent =
-            "¥" + Math.round(Number(data.price)).toLocaleString();
-        if (btn) {
+      document
+        .querySelectorAll(".card-add[data-handle]")
+        .forEach(function (btn) {
+          var data = window.getProduct(btn.dataset.handle);
+          if (!data) return;
           btn.dataset.variantId = data.variantId;
           btn.disabled = !data.available;
-          btn.textContent = data.available ? "カートに入れる" : "売り切れ";
-        }
-      });
+          btn.classList.toggle("is-soldout", !data.available);
+        });
     });
   }
 
   document.addEventListener("click", function (ev) {
-    var btn = ev.target.closest("[data-add]");
+    var btn = ev.target.closest(".card-add, [data-add]");
     if (!btn) return;
     ev.stopPropagation();
-    if (window.Cart && btn.dataset.variantId) {
-      window.Cart.add(btn.dataset.variantId);
+    ev.preventDefault();
+    if (!window.Cart) return;
+    var variantId = btn.dataset.variantId;
+    if (!variantId && btn.dataset.handle && window.getProduct) {
+      var data = window.getProduct(btn.dataset.handle);
+      variantId = data && data.variantId;
     }
+    if (variantId) window.Cart.add(variantId);
   });
 
   window.lightbox = {
