@@ -895,6 +895,16 @@
           btn.disabled = !data.available;
           btn.classList.toggle("is-soldout", !data.available);
         });
+      document
+        .querySelectorAll(".card-buy[data-handle]")
+        .forEach(function (el) {
+          var data = window.getProduct(el.dataset.handle);
+          if (!data) return;
+          var priceEl = el.querySelector("[data-price]");
+          if (priceEl)
+            priceEl.textContent =
+              "¥" + Math.round(Number(data.price)).toLocaleString();
+        });
     });
   }
 
