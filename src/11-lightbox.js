@@ -358,6 +358,7 @@
       sku: el.dataset.sku || "",
       size: el.dataset.size || "",
       shopifyHandle: el.dataset.shopifyHandle || "",
+      variant: el.dataset.variant || el.dataset.size || "",
     };
   });
 
@@ -842,13 +843,25 @@
       { passive: true },
     );
   }
+  function siblingIndex(dir) {
+    var group = products[productIndex].variant;
+    var i = productIndex;
+    for (var step = 0; step < products.length; step++) {
+      i = (i + dir + products.length) % products.length;
+      if (products[i].variant === group) return i;
+    }
+    return productIndex;
+  }
+
   caretLeft?.addEventListener("click", (ev) => {
     ev.stopPropagation();
-    switchProduct((productIndex - 1 + products.length) % products.length);
+    var idx = siblingIndex(-1);
+    if (idx !== productIndex) switchProduct(idx);
   });
   caretRight?.addEventListener("click", (ev) => {
     ev.stopPropagation();
-    switchProduct((productIndex + 1) % products.length);
+    var idx = siblingIndex(1);
+    if (idx !== productIndex) switchProduct(idx);
   });
   if (caretLeft) caretLeft.style.cursor = "pointer";
   if (caretRight) caretRight.style.cursor = "pointer";
@@ -950,8 +963,13 @@
     openProduct: (i) => openPopup("product", i),
     openNews: (i) => openPopup("news", i),
     close: closePopup,
-    nextProduct: () => switchProduct((productIndex + 1) % products.length),
-    prevProduct: () =>
-      switchProduct((productIndex - 1 + products.length) % products.length),
+    nextProduct: () => {
+      var idx = siblingIndex(1);
+      if (idx !== productIndex) switchProduct(idx);
+    },
+    prevProduct: () => {
+      var idx = siblingIndex(-1);
+      if (idx !== productIndex) switchProduct(idx);
+    },
   };
 })();
