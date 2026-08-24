@@ -884,26 +884,47 @@
       return p.shopifyHandle;
     })
     .filter(Boolean);
+  function resolveVariant(data, variantTitle) {
+    if (!data) return null;
+    if (variantTitle && data.variants) {
+      var match = data.variants.find(function (v) {
+        return v.title === variantTitle;
+      });
+      if (match) return match;
+    }
+    return {
+      id: data.variantId,
+      price: data.price,
+      available: data.available,
+    };
+  }
+
   if (handles.length && window.fetchProducts) {
     window.fetchProducts(handles).then(function () {
       document
         .querySelectorAll(".card-add[data-handle]")
         .forEach(function (btn) {
-          var data = window.getProduct(btn.dataset.handle);
-          if (!data) return;
-          btn.dataset.variantId = data.variantId;
-          btn.disabled = !data.available;
-          btn.classList.toggle("is-soldout", !data.available);
+          var v = resolveVariant(
+            window.getProduct(btn.dataset.handle),
+            btn.dataset.variant,
+          );
+          if (!v) return;
+          btn.dataset.variantId = v.id;
+          btn.disabled = !v.available;
+          btn.classList.toggle("is-soldout", !v.available);
         });
       document
         .querySelectorAll(".card-buy[data-handle]")
         .forEach(function (el) {
-          var data = window.getProduct(el.dataset.handle);
-          if (!data) return;
+          var v = resolveVariant(
+            window.getProduct(el.dataset.handle),
+            el.dataset.variant,
+          );
+          if (!v) return;
           var priceEl = el.querySelector("[data-price]");
           if (priceEl)
             priceEl.textContent =
-              "¥" + Math.round(Number(data.price)).toLocaleString();
+              "¥" + Math.round(Number(v.price)).toLocaleString();
         });
     });
   }
@@ -916,8 +937,11 @@
     if (!window.Cart) return;
     var variantId = btn.dataset.variantId;
     if (!variantId && btn.dataset.handle && window.getProduct) {
-      var data = window.getProduct(btn.dataset.handle);
-      variantId = data && data.variantId;
+      var v = resolveVariant(
+        window.getProduct(btn.dataset.handle),
+        btn.dataset.variant,
+      );
+      variantId = v && v.id;
     }
     if (variantId) window.Cart.add(variantId);
   });
