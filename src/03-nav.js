@@ -1,27 +1,33 @@
-document.addEventListener('DOMContentLoaded', () => {
-  const WHITE = 'rgb(245,239,225)';
-  const BLACK = 'rgb(31,29,33)';
-  const WHITE_SHIMMER = 'rgba(245,239,225,0.8)';
-  const BLACK_SHIMMER = 'rgba(31,29,33,0.8)';
+document.addEventListener("DOMContentLoaded", () => {
+  const WHITE = "rgb(245,239,225)";
+  const BLACK = "rgb(31,29,33)";
+  const WHITE_SHIMMER = "rgba(245,239,225,0.8)";
+  const BLACK_SHIMMER = "rgba(31,29,33,0.8)";
   const FADE_DUR = 0.4;
-  const FADE_EASE = 'power2.out';
+  const FADE_EASE = "power2.out";
 
-  const links = document.querySelectorAll('.nav-link');
-  const bgSections = document.querySelectorAll('[data-bg]');
-  const logo = document.querySelector('.yokai--nav-logo');
-  const stickyNav = document.querySelector('.sticky-nav');
-  const footerImg = document.querySelector('.footer--bg-wrapper');
+  const links = document.querySelectorAll(".nav-link");
+  const changeColorEls = document.querySelectorAll(".change-color");
+  const bgSections = document.querySelectorAll("[data-bg]");
+  const logo = document.querySelector(".yokai--nav-logo");
+  const stickyNav = document.querySelector(".sticky-nav");
+  const footerImg = document.querySelector(".footer--bg-wrapper");
   if (!links.length || !bgSections.length) return;
 
   let sections = [];
   let navYPositions = [];
+  let changeColorYPositions = [];
   let logoY = 0;
   let navHidden = false;
   const lastBg = new Map();
 
   const computeSections = () => {
     sections = Array.from(bgSections)
-      .map((sec) => ({ bg: sec.getAttribute('data-bg'), top: sec.offsetTop, bottom: sec.offsetTop + sec.offsetHeight }))
+      .map((sec) => ({
+        bg: sec.getAttribute("data-bg"),
+        top: sec.offsetTop,
+        bottom: sec.offsetTop + sec.offsetHeight,
+      }))
       .sort((a, b) => a.top - b.top);
     if (logo) {
       const r = logo.getBoundingClientRect();
@@ -29,6 +35,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     navYPositions = Array.from(links).map((l) => {
       const r = l.getBoundingClientRect();
+      return r.top + r.height / 2;
+    });
+    changeColorYPositions = Array.from(changeColorEls).map((el) => {
+      const r = el.getBoundingClientRect();
       return r.top + r.height / 2;
     });
   };
@@ -49,18 +59,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!bg) bg = lastBg.get(el);
     if (!bg || lastBg.get(el) === bg) return;
     lastBg.set(el, bg);
-    const addClass = bg === 'light' ? 'is-dark' : 'is-light';
-    const removeClass = bg === 'light' ? 'is-light' : 'is-dark';
+    const addClass = bg === "light" ? "is-dark" : "is-light";
+    const removeClass = bg === "light" ? "is-light" : "is-dark";
     el.classList.remove(removeClass);
     el.classList.add(addClass);
-    const text = el.querySelector?.('.small-text');
+    const text = el.querySelector?.(".small-text");
     if (text) {
-      const baseColor = addClass === 'is-light' ? WHITE : BLACK;
-      const shimmerColor = addClass === 'is-light' ? BLACK_SHIMMER : WHITE_SHIMMER;
+      const baseColor = addClass === "is-light" ? WHITE : BLACK;
+      const shimmerColor =
+        addClass === "is-light" ? BLACK_SHIMMER : WHITE_SHIMMER;
       text._baseColor = baseColor;
       text._shimmerColor = shimmerColor;
       text.style.color = baseColor;
-      const overlay = text.querySelector('.shimmer-overlay');
+      const overlay = text.querySelector(".shimmer-overlay");
       if (overlay) overlay.style.color = shimmerColor;
     }
   };
@@ -68,31 +79,48 @@ document.addEventListener('DOMContentLoaded', () => {
   const updateNav = () => {
     const sy = window.scrollY;
     if (logo) updateElement(logo, getBgAt(sy + logoY));
-    for (let i = 0; i < links.length; i++) updateElement(links[i], getBgAt(sy + navYPositions[i]));
+    for (let i = 0; i < links.length; i++)
+      updateElement(links[i], getBgAt(sy + navYPositions[i]));
+    for (let i = 0; i < changeColorEls.length; i++)
+      updateElement(changeColorEls[i], getBgAt(sy + changeColorYPositions[i]));
     if (stickyNav && footerImg) {
-      const shouldHide = footerImg.getBoundingClientRect().bottom <= window.innerHeight;
+      const shouldHide =
+        footerImg.getBoundingClientRect().bottom <= window.innerHeight;
       if (shouldHide && !navHidden) {
         navHidden = true;
-        gsap.to(stickyNav, { opacity: 0, duration: FADE_DUR, ease: FADE_EASE, onComplete: () => { stickyNav.style.pointerEvents = 'none'; } });
+        gsap.to(stickyNav, {
+          opacity: 0,
+          duration: FADE_DUR,
+          ease: FADE_EASE,
+          onComplete: () => {
+            stickyNav.style.pointerEvents = "none";
+          },
+        });
       } else if (!shouldHide && navHidden) {
         navHidden = false;
-        stickyNav.style.pointerEvents = '';
+        stickyNav.style.pointerEvents = "";
         gsap.to(stickyNav, { opacity: 1, duration: FADE_DUR, ease: FADE_EASE });
       }
     }
   };
 
   links.forEach((link) => {
-    const text = link.querySelector('.small-text');
+    const text = link.querySelector(".small-text");
     if (text) window.YokaiShimmer.setup(text);
-    link.addEventListener('mouseenter', () => {
+    link.addEventListener("mouseenter", () => {
       if (text) gsap.timeline().add(window.YokaiShimmer.play(text, 1.2), 0);
     });
   });
 
   computeSections();
   updateNav();
-  window.addEventListener('scroll', updateNav, { passive: true });
-  window.addEventListener('resize', () => { computeSections(); updateNav(); });
-  window.addEventListener('layout-change', () => { computeSections(); updateNav(); });
+  window.addEventListener("scroll", updateNav, { passive: true });
+  window.addEventListener("resize", () => {
+    computeSections();
+    updateNav();
+  });
+  window.addEventListener("layout-change", () => {
+    computeSections();
+    updateNav();
+  });
 });
