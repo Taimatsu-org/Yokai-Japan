@@ -87,6 +87,23 @@
   };
 
   // ---- Cart ----
+  var FREE_SHIPPING_THRESHOLD = 10000; // 円。免運門檻，改這裡即可
+
+  function renderShipping() {
+    var bar = document.querySelector("[data-shipping-bar]");
+    var msg = document.querySelector("[data-shipping-msg]");
+    if (!bar && !msg) return;
+    var subtotal = Number(cart?.cost?.subtotalAmount?.amount || 0);
+    var remain = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal);
+    var pct = Math.min(100, (subtotal / FREE_SHIPPING_THRESHOLD) * 100);
+    if (bar) bar.style.width = pct + "%";
+    if (msg)
+      msg.textContent =
+        remain > 0
+          ? "あと" + yen(remain) + "で送料無料"
+          : "送料無料になりました";
+  }
+
   function render() {
     var count = document.querySelector("[data-cart-count]");
     var list = document.querySelector("[data-cart-lines]");
@@ -98,6 +115,7 @@
     if (total && cart?.cost)
       total.textContent = yen(cart.cost.subtotalAmount.amount);
     if (empty) empty.style.display = qty === 0 ? "" : "none";
+    renderShipping();
     if (!list) return;
 
     var lines = cart?.lines?.edges || [];
