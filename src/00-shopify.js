@@ -33,7 +33,7 @@
   lines(first: 50) { edges { node {
     id quantity
     merchandise { ... on ProductVariant {
-      id image { url } price { amount } product { title }
+      id sku title image { url } price { amount } product { title }
     }}
   }}}`;
 
@@ -152,6 +152,7 @@
         <div class="cart-line-title-and-price">
         <p class="cart-line-title">${m.product.title}</p>
         <p class="cart-line-price">${yen(m.price.amount)}</p>
+        <p class="cart-line-variant">${[m.title, m.sku].filter(Boolean).join(" / ")}</p>
         </div>
         <p>EAU DE PARFUM</p>
         <div class="cart-line-qty">
