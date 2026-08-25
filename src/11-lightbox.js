@@ -522,7 +522,11 @@
       if (mBtn) {
         mBtn.dataset.variantId = v.id;
         mBtn.disabled = !v.available;
-        mBtn.textContent = v.available ? "カートに入れる" : "売り切れ";
+        var t = window.YokaiI18n || {
+          addToCart: "カートに入れる",
+          soldOut: "売り切れ",
+        };
+        mBtn.textContent = v.available ? t.addToCart : t.soldOut;
       }
     }
     resetSlideLines();

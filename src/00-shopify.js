@@ -4,6 +4,29 @@
   var TOKEN = "1432a4269f2a938b1e58ab4c6b49138a";
   var KEY = "yokai_cart_id";
 
+  // ---- i18n（路徑第一段是 ja 就用日文，否則英文） ----
+  var IS_JA = window.location.pathname.split("/").filter(Boolean)[0] === "ja";
+  var T = IS_JA
+    ? {
+        remove: "削除",
+        addToCart: "カートに入れる",
+        soldOut: "売り切れ",
+        freeShipRemain: function (r) {
+          return "あと" + yen(r) + "で送料無料";
+        },
+        freeShipDone: "送料無料になりました",
+      }
+    : {
+        remove: "REMOVE",
+        addToCart: "ADD TO CART",
+        soldOut: "SOLD OUT",
+        freeShipRemain: function (r) {
+          return yen(r) + " away from free shipping";
+        },
+        freeShipDone: "You've got free shipping",
+      };
+  window.YokaiI18n = T;
+
   var CART_FIELDS = `
   id checkoutUrl totalQuantity
   cost { subtotalAmount { amount } }
@@ -98,20 +121,19 @@
     var pct = Math.min(100, (subtotal / FREE_SHIPPING_THRESHOLD) * 100);
     if (bar) bar.style.width = pct + "%";
     if (msg)
-      msg.textContent =
-        remain > 0
-          ? "あと" + yen(remain) + "で送料無料"
-          : "送料無料になりました";
+      msg.textContent = remain > 0 ? T.freeShipRemain(remain) : T.freeShipDone;
   }
 
   function render() {
-    var count = document.querySelector("[data-cart-count]");
+    var counts = document.querySelectorAll("[data-cart-count]");
     var list = document.querySelector("[data-cart-lines]");
     var total = document.querySelector("[data-cart-total]");
     var empty = document.querySelector("[data-cart-empty]");
 
     var qty = cart?.totalQuantity || 0;
-    if (count) count.textContent = qty;
+    counts.forEach(function (el) {
+      el.textContent = qty;
+    });
     if (total && cart?.cost)
       total.textContent = yen(cart.cost.subtotalAmount.amount);
     if (empty) empty.style.display = qty === 0 ? "" : "none";
@@ -127,15 +149,20 @@
       <div class="cart-line">
         ${m.image ? `<img class="cart-line-img" src="${m.image.url}" alt="">` : ""}
         <div class="cart-line-info">
-          <div class="cart-line-title">${m.product.title}</div>
-          <div class="cart-line-price">${yen(m.price.amount)}</div>
-          <div class="cart-line-qty">
+        <div class="cart-line-title-and-price">
+        <p class="cart-line-title">${m.product.title}</p>
+        <p class="cart-line-price">${yen(m.price.amount)}</p>
+        </div>
+        <p>EAU DE PARFUM</p>
+        <div class="cart-line-qty">
+        <div>
             <button onclick="Cart.setQty('${n.id}', ${n.quantity - 1})">−</button>
             <span>${n.quantity}</span>
             <button onclick="Cart.setQty('${n.id}', ${n.quantity + 1})">+</button>
           </div>
+          </div>
+          <button class="cart-line-remove" onclick="Cart.remove('${n.id}')">${T.remove}</button>
         </div>
-        <button class="cart-line-remove" onclick="Cart.remove('${n.id}')">×</button>
       </div>`;
       })
       .join("");
