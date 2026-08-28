@@ -149,12 +149,14 @@
       <div class="cart-line">
         ${m.image ? `<img class="cart-line-img" src="${m.image.url}" alt="">` : ""}
         <div class="cart-line-info">
-            <div class="cart-line-title-and-price">
-                <p class="cart-line-title">${m.product.title}</p>
-                <p class="cart-line-price">${yen(m.price.amount)}</p>
+            <div class='cart-line-info-wrapper'>
+                <div class="cart-line-title-and-price">
+                    <p class="cart-line-title">${m.product.title}</p>
+                    <p class="cart-line-price">${yen(m.price.amount)}</p>
+                </div>
+                <p class='cart-line-purfume-style'>EAU DE PARFUM</p>
+                <p class="cart-line-variant">${[m.title, m.sku].filter(Boolean).join(" / ")}</p>
             </div>
-            <p class="cart-line-variant">${[m.title, m.sku].filter(Boolean).join(" / ")}</p>
-            <p>EAU DE PARFUM</p>
             <div class="cart-line-qty">
                 <div>
                     <button onclick="Cart.setQty('${n.id}', ${n.quantity - 1})">−</button>
