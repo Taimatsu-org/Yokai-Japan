@@ -155,10 +155,15 @@
                     <p class="cart-line-price">${yen(m.price.amount)}</p>
                 </div>
                 <p class='cart-line-purfume-style'>EAU DE PARFUM</p>
-                <p class="cart-line-variant">${[m.title, m.sku].filter(Boolean).join(" / ")}</p>
+                <p class="cart-line-variant">${[m.title, m.sku]
+                  .filter(Boolean)
+                  .map(function (v) {
+                    return `<span>${v}</span>`;
+                  })
+                  .join('<span class="cart-line-variant-sep"> / </span>')}</p>
             </div>
             <div class="cart-line-qty">
-                <div>
+                <div class='cart-line-qty-selector'>
                     <button onclick="Cart.setQty('${n.id}', ${n.quantity - 1})">−</button>
                         <span>${n.quantity}</span>
                     <button onclick="Cart.setQty('${n.id}', ${n.quantity + 1})">+</button>
