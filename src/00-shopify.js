@@ -164,9 +164,9 @@
             </div>
             <div class="cart-line-qty">
                 <div class='cart-line-qty-selector'>
-                    <button onclick="Cart.setQty('${n.id}', ${n.quantity - 1})" class='cart-line-qty-selector-plus'></button>
+                    <button onclick="Cart.setQty('${n.id}', ${n.quantity - 1})" class='cart-line-qty-selector-minus'></button>
                         <span>${n.quantity}</span>
-                    <button onclick="Cart.setQty('${n.id}', ${n.quantity + 1})" class='cart-line-qty-selector-minus'></button>
+                    <button onclick="Cart.setQty('${n.id}', ${n.quantity + 1})" class='cart-line-qty-selector-plus'></button>
                 </div>
                 <button class="cart-line-remove" onclick="Cart.remove('${n.id}')">${T.remove}</button>
             </div>
