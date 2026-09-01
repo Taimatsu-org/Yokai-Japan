@@ -876,7 +876,14 @@
       btn.style.cursor = "pointer";
       btn.addEventListener("click", function (ev) {
         ev.preventDefault();
-        openPopup("news", index);
+        if (mode) {
+          closePopup();
+          setTimeout(function () {
+            openPopup("news", index);
+          }, CLOSE_DELAY);
+        } else {
+          openPopup("news", index);
+        }
       });
     });
   });
