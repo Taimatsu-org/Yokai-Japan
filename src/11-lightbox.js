@@ -507,14 +507,18 @@
       (line, i) => (line.style.display = i < count ? "" : "none"),
     );
     var data = window.getProduct && window.getProduct(product.shopifyHandle);
-    var mTitle = overlay.querySelector("[data-modal-buy] [data-shopify-title]");
-    var mPrice = overlay.querySelector("[data-modal-buy] [data-price]");
-    var mBtn = overlay.querySelector("[data-modal-buy] [data-add]");
+    var mTitles = overlay.querySelectorAll(
+      "[data-modal-buy] [data-shopify-title]",
+    );
+    var mPrices = overlay.querySelectorAll("[data-modal-buy] [data-price]");
+    var mBtns = overlay.querySelectorAll("[data-modal-buy] [data-add]");
     var mOpts = overlay.querySelector("[data-variant-options]");
     if (mOpts) mOpts.innerHTML = "";
     if (data) {
-      if (mTitle) mTitle.textContent = data.title;
-      applyVariant(resolveVariant(data, product.variant), mBtn, mPrice);
+      mTitles.forEach(function (el) {
+        el.textContent = data.title;
+      });
+      applyVariant(resolveVariant(data, product.variant), mBtns, mPrices);
       if (mOpts && data.variants && data.variants.length > 1) {
         data.variants.forEach(function (variant) {
           var opt = document.createElement("button");
@@ -537,7 +541,7 @@
                 el.classList.remove("is-active");
               });
               opt.classList.add("is-active");
-              applyVariant(variant, mBtn, mPrice);
+              applyVariant(variant, mBtns, mPrices);
             }
           });
           mOpts.appendChild(opt);
@@ -877,19 +881,21 @@
       return p.shopifyHandle;
     })
     .filter(Boolean);
-  function applyVariant(v, mBtn, mPrice) {
+  function applyVariant(v, mBtns, mPrices) {
     if (!v) return;
-    if (mPrice)
-      mPrice.textContent = "¥" + Math.round(Number(v.price)).toLocaleString();
-    if (mBtn) {
-      mBtn.dataset.variantId = v.id;
-      mBtn.disabled = !v.available;
-      var t = window.YokaiI18n || {
-        addToCart: "カートに入れる",
-        soldOut: "売り切れ",
-      };
-      mBtn.textContent = v.available ? t.addToCart : t.soldOut;
-    }
+    var priceText = "¥" + Math.round(Number(v.price)).toLocaleString();
+    mPrices.forEach(function (el) {
+      el.textContent = priceText;
+    });
+    var t = window.YokaiI18n || {
+      addToCart: "カートに入れる",
+      soldOut: "売り切れ",
+    };
+    mBtns.forEach(function (btn) {
+      btn.dataset.variantId = v.id;
+      btn.disabled = !v.available;
+      btn.textContent = v.available ? t.addToCart : t.soldOut;
+    });
   }
 
   function resolveVariant(data, variantTitle) {
