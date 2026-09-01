@@ -523,11 +523,22 @@
           opt.textContent = variant.title;
           opt.classList.toggle("is-active", variant.title === product.variant);
           opt.addEventListener("click", function () {
-            mOpts.querySelectorAll(".variant-option").forEach(function (el) {
-              el.classList.remove("is-active");
+            if (variant.title === product.variant) return;
+            var siblingIdx = products.findIndex(function (p) {
+              return (
+                p.shopifyHandle === product.shopifyHandle &&
+                p.variant === variant.title
+              );
             });
-            opt.classList.add("is-active");
-            applyVariant(variant, mBtn, mPrice);
+            if (siblingIdx >= 0) {
+              switchProduct(siblingIdx);
+            } else {
+              mOpts.querySelectorAll(".variant-option").forEach(function (el) {
+                el.classList.remove("is-active");
+              });
+              opt.classList.add("is-active");
+              applyVariant(variant, mBtn, mPrice);
+            }
           });
           mOpts.appendChild(opt);
         });
