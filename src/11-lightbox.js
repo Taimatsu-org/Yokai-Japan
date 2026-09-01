@@ -510,23 +510,27 @@
     var mTitle = overlay.querySelector("[data-modal-buy] [data-shopify-title]");
     var mPrice = overlay.querySelector("[data-modal-buy] [data-price]");
     var mBtn = overlay.querySelector("[data-modal-buy] [data-add]");
-    var mOpts = overlay.querySelector(
-      "[data-modal-buy] [data-variant-options]",
-    );
+    var mOpts = overlay.querySelector("[data-variant-options]");
     if (mOpts) mOpts.innerHTML = "";
     if (data) {
       if (mTitle) mTitle.textContent = data.title;
-      var v = resolveVariant(data, product.variant);
-      if (mPrice)
-        mPrice.textContent = "¥" + Math.round(Number(v.price)).toLocaleString();
-      if (mBtn) {
-        mBtn.dataset.variantId = v.id;
-        mBtn.disabled = !v.available;
-        var t = window.YokaiI18n || {
-          addToCart: "カートに入れる",
-          soldOut: "売り切れ",
-        };
-        mBtn.textContent = v.available ? t.addToCart : t.soldOut;
+      applyVariant(resolveVariant(data, product.variant), mBtn, mPrice);
+      if (mOpts && data.variants && data.variants.length > 1) {
+        data.variants.forEach(function (variant) {
+          var opt = document.createElement("button");
+          opt.type = "button";
+          opt.className = "variant-option";
+          opt.textContent = variant.title;
+          opt.classList.toggle("is-active", variant.title === product.variant);
+          opt.addEventListener("click", function () {
+            mOpts.querySelectorAll(".variant-option").forEach(function (el) {
+              el.classList.remove("is-active");
+            });
+            opt.classList.add("is-active");
+            applyVariant(variant, mBtn, mPrice);
+          });
+          mOpts.appendChild(opt);
+        });
       }
     }
     resetSlideLines();
@@ -862,6 +866,21 @@
       return p.shopifyHandle;
     })
     .filter(Boolean);
+  function applyVariant(v, mBtn, mPrice) {
+    if (!v) return;
+    if (mPrice)
+      mPrice.textContent = "¥" + Math.round(Number(v.price)).toLocaleString();
+    if (mBtn) {
+      mBtn.dataset.variantId = v.id;
+      mBtn.disabled = !v.available;
+      var t = window.YokaiI18n || {
+        addToCart: "カートに入れる",
+        soldOut: "売り切れ",
+      };
+      mBtn.textContent = v.available ? t.addToCart : t.soldOut;
+    }
+  }
+
   function resolveVariant(data, variantTitle) {
     if (!data) return null;
     if (variantTitle && data.variants) {
