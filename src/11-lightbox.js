@@ -127,20 +127,18 @@
   }
 
   function blockScroll(ev) {
-    if (mode === "news") {
-      var node = ev.target;
-      while (node && node !== document) {
-        if (node === newsContent) return;
-        node = node.parentNode;
-      }
-    }
-    if (mode === "product") {
-      var node = ev.target;
-      while (node && node !== document) {
-        if (node.classList && node.classList.contains("popup--content-right"))
-          return;
-        node = node.parentNode;
-      }
+    var node = ev.target;
+    while (node && node !== document) {
+      if (node.classList && node.classList.contains("cart-drawer-panel"))
+        return;
+      if (mode === "news" && node === newsContent) return;
+      if (
+        mode === "product" &&
+        node.classList &&
+        node.classList.contains("popup--content-right")
+      )
+        return;
+      node = node.parentNode;
     }
     ev.preventDefault();
     ev.stopPropagation();
@@ -857,6 +855,7 @@
   var FOOTER_NEWS_LINKS = [
     { slug: "privacy-policy", attr: "data-privacy" },
     { slug: "counterfeit-notice", attr: "data-counterfeit" },
+    { slug: "return-and-shipping-policy", attr: "data-shipping-policy" },
   ];
 
   FOOTER_NEWS_LINKS.forEach(function (link) {
@@ -869,14 +868,16 @@
       }
     });
     if (index < 0) return;
-    var btn =
-      document.querySelector(".footer-content [" + link.attr + "]") ||
-      document.querySelector("[" + link.attr + "]");
-    if (!btn) return;
-    btn.style.cursor = "pointer";
-    btn.addEventListener("click", function (ev) {
-      ev.preventDefault();
-      openPopup("news", index);
+    var btns = document.querySelectorAll(
+      ".footer-content [" + link.attr + "], [" + link.attr + "]",
+    );
+    if (!btns.length) return;
+    btns.forEach(function (btn) {
+      btn.style.cursor = "pointer";
+      btn.addEventListener("click", function (ev) {
+        ev.preventDefault();
+        openPopup("news", index);
+      });
     });
   });
 
