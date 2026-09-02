@@ -7,7 +7,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const FADE_EASE = "power2.out";
 
   const links = document.querySelectorAll(".nav-link");
-  const changeColorEls = document.querySelectorAll(".change-color");
+  const cartAndLocale = document.querySelector(".cart-and-locale");
+  const changeColorEls = Array.from(
+    document.querySelectorAll(".change-color"),
+  ).filter((el) => !cartAndLocale || !cartAndLocale.contains(el));
   const bgSections = document.querySelectorAll("[data-bg]");
   const logo = document.querySelector(".yokai--nav-logo");
   const stickyNav = document.querySelector(".sticky-nav");
@@ -18,6 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let navYPositions = [];
   let changeColorYPositions = [];
   let logoY = 0;
+  let cartAndLocaleY = 0;
   let navHidden = false;
   const lastBg = new Map();
 
@@ -32,6 +36,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (logo) {
       const r = logo.getBoundingClientRect();
       logoY = r.top + r.height / 2;
+    }
+    if (cartAndLocale) {
+      const r = cartAndLocale.getBoundingClientRect();
+      cartAndLocaleY = r.top + r.height / 2;
     }
     navYPositions = Array.from(links).map((l) => {
       const r = l.getBoundingClientRect();
@@ -79,6 +87,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const updateNav = () => {
     const sy = window.scrollY;
     if (logo) updateElement(logo, getBgAt(sy + logoY));
+    if (cartAndLocale)
+      updateElement(cartAndLocale, getBgAt(sy + cartAndLocaleY));
     for (let i = 0; i < links.length; i++)
       updateElement(links[i], getBgAt(sy + navYPositions[i]));
     for (let i = 0; i < changeColorEls.length; i++)
