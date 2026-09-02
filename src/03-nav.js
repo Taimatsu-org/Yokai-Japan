@@ -94,22 +94,23 @@ document.addEventListener("DOMContentLoaded", () => {
     for (let i = 0; i < changeColorEls.length; i++)
       updateElement(changeColorEls[i], getBgAt(sy + changeColorYPositions[i]));
     if (stickyNav && footerImg) {
+      const fadeEls = cartAndLocale ? [stickyNav, cartAndLocale] : [stickyNav];
       const shouldHide =
         footerImg.getBoundingClientRect().bottom <= window.innerHeight;
       if (shouldHide && !navHidden) {
         navHidden = true;
-        gsap.to(stickyNav, {
+        gsap.to(fadeEls, {
           opacity: 0,
           duration: FADE_DUR,
           ease: FADE_EASE,
           onComplete: () => {
-            stickyNav.style.pointerEvents = "none";
+            fadeEls.forEach((el) => (el.style.pointerEvents = "none"));
           },
         });
       } else if (!shouldHide && navHidden) {
         navHidden = false;
-        stickyNav.style.pointerEvents = "";
-        gsap.to(stickyNav, { opacity: 1, duration: FADE_DUR, ease: FADE_EASE });
+        fadeEls.forEach((el) => (el.style.pointerEvents = ""));
+        gsap.to(fadeEls, { opacity: 1, duration: FADE_DUR, ease: FADE_EASE });
       }
     }
   };
