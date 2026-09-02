@@ -27,6 +27,7 @@ const mainFiles = [
   "14-mob-nav.js",
   "15-store-map.js",
   "16-locale-switch.js",
+  "17-fragrance-tabs.js",
 ];
 
 // 1. Build main.min.js
