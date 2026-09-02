@@ -110,18 +110,20 @@
   };
 
   // ---- Cart ----
-  var FREE_SHIPPING_THRESHOLD = 10000; // 円。免運門檻，改這裡即可
+  var FREE_SHIPPING_THRESHOLD = 12000;
 
   function renderShipping() {
     var bar = document.querySelector("[data-shipping-bar]");
     var msg = document.querySelector("[data-shipping-msg]");
-    if (!bar && !msg) return;
+    var goal = document.querySelector("[data-shipping-goal]");
+    if (!bar && !msg && !goal) return;
     var subtotal = Number(cart?.cost?.subtotalAmount?.amount || 0);
     var remain = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal);
     var pct = Math.min(100, (subtotal / FREE_SHIPPING_THRESHOLD) * 100);
     if (bar) bar.style.width = pct + "%";
     if (msg)
       msg.textContent = remain > 0 ? T.freeShipRemain(remain) : T.freeShipDone;
+    if (goal) goal.textContent = yen(FREE_SHIPPING_THRESHOLD);
   }
 
   function render() {
