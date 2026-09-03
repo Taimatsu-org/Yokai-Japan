@@ -522,14 +522,17 @@
           var opt = document.createElement("button");
           opt.type = "button";
           opt.className = "variant-option";
-          opt.textContent = variant.title;
-          opt.classList.toggle("is-active", variant.title === product.variant);
+          opt.textContent = shortSizeLabel(variant.title);
+          var isActive =
+            normalizeSize(variant.title) === normalizeSize(product.variant);
+          opt.classList.toggle("is-active", isActive);
           opt.addEventListener("click", function () {
-            if (variant.title === product.variant) return;
+            if (normalizeSize(variant.title) === normalizeSize(product.variant))
+              return;
             var siblingIdx = products.findIndex(function (p) {
               return (
                 p.shopifyHandle === product.shopifyHandle &&
-                p.variant === variant.title
+                normalizeSize(p.variant) === normalizeSize(variant.title)
               );
             });
             if (siblingIdx >= 0) {
@@ -900,7 +903,7 @@
       el.textContent = priceText;
     });
     if (popupSku && v.sku) popupSku.textContent = v.sku;
-    if (popupSize && v.title) popupSize.textContent = v.title;
+    if (popupSize && v.title) popupSize.textContent = shortSizeLabel(v.title);
     var t = window.YokaiI18n || {
       addToCart: "カートに入れる",
       soldOut: "売り切れ",
@@ -912,11 +915,23 @@
     });
   }
 
+  function normalizeSize(str) {
+    if (!str) return "";
+    var m = String(str).match(/(\d+(?:\.\d+)?)\s*ml/i);
+    return m ? m[1] : String(str).trim().toLowerCase();
+  }
+
+  function shortSizeLabel(str) {
+    var m = String(str || "").match(/(\d+(?:\.\d+)?)\s*ml/i);
+    return m ? m[1] + "ml" : str;
+  }
+
   function resolveVariant(data, variantTitle) {
     if (!data) return null;
     if (variantTitle && data.variants) {
+      var norm = normalizeSize(variantTitle);
       var match = data.variants.find(function (v) {
-        return v.title === variantTitle;
+        return v.title === variantTitle || normalizeSize(v.title) === norm;
       });
       if (match) return match;
     }
