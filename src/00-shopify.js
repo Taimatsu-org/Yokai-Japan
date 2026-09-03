@@ -65,7 +65,7 @@
       title
       images(first: 1) { edges { node { url } } }
       variants(first: 20) { edges { node {
-        id title price { amount } availableForSale image { url }
+        id title sku price { amount } availableForSale image { url }
       } } }
     }`;
       })
@@ -80,6 +80,7 @@
           return {
             id: v.id,
             title: v.title,
+            sku: v.sku || "",
             price: v.price?.amount || "",
             available: v.availableForSale !== false,
             image: v.image?.url || "",

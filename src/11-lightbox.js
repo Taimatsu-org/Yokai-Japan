@@ -899,6 +899,8 @@
     mPrices.forEach(function (el) {
       el.textContent = priceText;
     });
+    if (popupSku && v.sku) popupSku.textContent = v.sku;
+    if (popupSize && v.title) popupSize.textContent = v.title;
     var t = window.YokaiI18n || {
       addToCart: "カートに入れる",
       soldOut: "売り切れ",
