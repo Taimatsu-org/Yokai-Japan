@@ -511,41 +511,41 @@
     var mPrices = overlay.querySelectorAll("[data-modal-buy] [data-price]");
     var mBtns = overlay.querySelectorAll("[data-modal-buy] [data-add]");
     var mOpts = overlay.querySelector("[data-variant-options]");
-    if (mOpts) mOpts.innerHTML = "";
     if (data) {
       mTitles.forEach(function (el) {
         el.textContent = data.title;
       });
       applyVariant(resolveVariant(data, product.variant), mBtns, mPrices);
-      if (mOpts && data.variants && data.variants.length > 1) {
-        data.variants.forEach(function (variant) {
-          var opt = document.createElement("button");
-          opt.type = "button";
-          opt.className = "variant-option";
-          opt.textContent = shortSizeLabel(variant.title);
-          var isActive =
-            normalizeSize(variant.title) === normalizeSize(product.variant);
-          opt.classList.toggle("is-active", isActive);
-          opt.addEventListener("click", function () {
-            if (normalizeSize(variant.title) === normalizeSize(product.variant))
-              return;
+      if (mOpts) {
+        var optButtons = mOpts.querySelectorAll("[data-variant]");
+        optButtons.forEach(function (opt) {
+          var optSize = normalizeSize(opt.dataset.variant);
+          opt.classList.toggle(
+            "is-active",
+            optSize === normalizeSize(product.variant),
+          );
+          opt.onclick = function () {
+            if (optSize === normalizeSize(product.variant)) return;
             var siblingIdx = products.findIndex(function (p) {
               return (
                 p.shopifyHandle === product.shopifyHandle &&
-                normalizeSize(p.variant) === normalizeSize(variant.title)
+                normalizeSize(p.variant) === optSize
               );
             });
             if (siblingIdx >= 0) {
               switchProduct(siblingIdx);
-            } else {
-              mOpts.querySelectorAll(".variant-option").forEach(function (el) {
-                el.classList.remove("is-active");
-              });
-              opt.classList.add("is-active");
-              applyVariant(variant, mBtns, mPrices);
+              return;
             }
-          });
-          mOpts.appendChild(opt);
+            var match = data.variants.find(function (v) {
+              return normalizeSize(v.title) === optSize;
+            });
+            if (!match) return;
+            optButtons.forEach(function (el) {
+              el.classList.remove("is-active");
+            });
+            opt.classList.add("is-active");
+            applyVariant(match, mBtns, mPrices);
+          };
         });
       }
     }
@@ -903,7 +903,7 @@
       el.textContent = priceText;
     });
     if (popupSku && v.sku) popupSku.textContent = v.sku;
-    if (popupSize && v.title) popupSize.textContent = shortSizeLabel(v.title);
+    if (popupSize && v.title) popupSize.textContent = v.title;
     var t = window.YokaiI18n || {
       addToCart: "カートに入れる",
       soldOut: "売り切れ",
@@ -919,11 +919,6 @@
     if (!str) return "";
     var m = String(str).match(/(\d+(?:\.\d+)?)\s*ml/i);
     return m ? m[1] : String(str).trim().toLowerCase();
-  }
-
-  function shortSizeLabel(str) {
-    var m = String(str || "").match(/(\d+(?:\.\d+)?)\s*ml/i);
-    return m ? m[1] + "ml" : str;
   }
 
   function resolveVariant(data, variantTitle) {
