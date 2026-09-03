@@ -18,7 +18,7 @@
       }
     : {
         remove: "REMOVE",
-        addToCart: "ADD TO CART",
+        addToCart: "Add To Cart",
         soldOut: "SOLD OUT",
         freeShipRemain: function (r) {
           return yen(r) + " away from free shipping";
