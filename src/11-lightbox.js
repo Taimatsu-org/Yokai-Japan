@@ -875,9 +875,10 @@
       ".footer-content [" + link.attr + "], [" + link.attr + "]",
     );
     if (!btns.length) return;
+    var TAP_TOLERANCE = 10;
     btns.forEach(function (btn) {
       btn.style.cursor = "pointer";
-      btn.addEventListener("click", function (ev) {
+      var open = function (ev) {
         ev.preventDefault();
         if (mode) {
           closePopup();
@@ -887,7 +888,25 @@
         } else {
           openPopup("news", index);
         }
+      };
+      var touchStartX = 0,
+        touchStartY = 0;
+      btn.addEventListener(
+        "touchstart",
+        function (ev) {
+          var t = ev.touches[0];
+          touchStartX = t.clientX;
+          touchStartY = t.clientY;
+        },
+        { passive: true },
+      );
+      btn.addEventListener("touchend", function (ev) {
+        var t = ev.changedTouches[0];
+        var dx = t.clientX - touchStartX;
+        var dy = t.clientY - touchStartY;
+        if (Math.sqrt(dx * dx + dy * dy) < TAP_TOLERANCE) open(ev);
       });
+      btn.addEventListener("click", open);
     });
   });
 
