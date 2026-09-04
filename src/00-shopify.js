@@ -54,7 +54,7 @@
   var productCache = {};
 
   function yen(n) {
-    return "¥" + Math.round(Number(n)).toLocaleString();
+    return "¥" + Math.round(Number(n)).toLocaleString("en-US");
   }
 
   // ---- Products Info ----

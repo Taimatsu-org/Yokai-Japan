@@ -898,7 +898,7 @@
     .filter(Boolean);
   function applyVariant(v, mBtns, mPrices) {
     if (!v) return;
-    var priceText = "¥" + Math.round(Number(v.price)).toLocaleString();
+    var priceText = "¥" + Math.round(Number(v.price)).toLocaleString("en-US");
     mPrices.forEach(function (el) {
       el.textContent = priceText;
     });
@@ -962,7 +962,7 @@
           var priceEl = el.querySelector("[data-price]");
           if (priceEl)
             priceEl.textContent =
-              "¥" + Math.round(Number(v.price)).toLocaleString();
+              "¥" + Math.round(Number(v.price)).toLocaleString("en-US");
         });
     });
   }
