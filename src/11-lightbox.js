@@ -866,8 +866,6 @@
     newsItems.forEach(function (item, i) {
       if (item.slug === link.slug) {
         index = i;
-        var row = newsRows[i];
-        if (row) row.style.display = "none";
       }
     });
     if (index < 0) return;
