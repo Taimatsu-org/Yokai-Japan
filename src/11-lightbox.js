@@ -691,6 +691,14 @@
   function closePopup() {
     if (transitioning || !mode) return;
     transitioning = true;
+    var currentHashSlug = normalizeNewsSlug(window.location.hash.slice(1));
+    if (
+      FOOTER_NEWS_LINKS.some(function (link) {
+        return normalizeNewsSlug(link.slug) === currentHashSlug;
+      })
+    ) {
+      setNewsHash("");
+    }
     if (mode === "product") stopAutoplay();
     var content = mode === "product" ? productContent : newsContent;
     overlay.style.transition =
@@ -880,6 +888,28 @@
     { slug: "legal-notice", attr: "data-legal-notice" },
   ];
 
+  function findNewsIndex(link, slug) {
+    var normalizedLinkSlug = normalizeNewsSlug(link.slug);
+    var normalizedSlug = normalizeNewsSlug(slug);
+    return newsItems.findIndex(function (item) {
+      return (
+        item.slug === normalizedLinkSlug ||
+        item.slug === normalizedSlug ||
+        normalizeNewsSlug(item.title) === normalizedLinkSlug
+      );
+    });
+  }
+
+  function setNewsHash(slug) {
+    window.history.replaceState(
+      window.history.state,
+      "",
+      window.location.pathname +
+        window.location.search +
+        (slug ? "#" + encodeURIComponent(slug) : ""),
+    );
+  }
+
   document.querySelectorAll(
     FOOTER_NEWS_LINKS.map(function (link) {
       return "[" + link.attr + "]";
@@ -903,13 +933,7 @@
       });
       if (!link) return;
       var slug = normalizeNewsSlug(btn.getAttribute(link.attr)) || link.slug;
-      var index = newsItems.findIndex(function (item) {
-        return (
-          item.slug === normalizeNewsSlug(link.slug) ||
-          item.slug === slug ||
-          normalizeNewsSlug(item.title) === normalizeNewsSlug(link.slug)
-        );
-      });
+      var index = findNewsIndex(link, slug);
       if (index < 0) {
         console.warn(
           "Footer lightbox link has no matching news item:",
@@ -920,15 +944,35 @@
       ev.preventDefault();
       if (mode) {
         closePopup();
+        setNewsHash(link.slug);
         setTimeout(function () {
           openPopup("news", index);
         }, CLOSE_DELAY);
       } else {
+        setNewsHash(link.slug);
         openPopup("news", index);
       }
     },
     true,
   );
+
+  var initialNewsSlug = normalizeNewsSlug(
+    window.location.hash.slice(1),
+  );
+  var initialNewsLink = FOOTER_NEWS_LINKS.find(function (link) {
+    return normalizeNewsSlug(link.slug) === initialNewsSlug;
+  });
+  if (initialNewsLink) {
+    var initialNewsIndex = findNewsIndex(initialNewsLink, initialNewsSlug);
+    if (initialNewsIndex >= 0) {
+      openPopup("news", initialNewsIndex);
+    } else {
+      console.warn(
+        "Shared news lightbox link has no matching news item:",
+        initialNewsLink.slug,
+      );
+    }
+  }
 
   var handles = products
     .map(function (p) {
