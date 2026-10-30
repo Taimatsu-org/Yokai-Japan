@@ -369,6 +369,7 @@
       .split("/")
       .pop()
       .replace(/\.html?$/i, "")
+      .replace(/[\s_]+/g, "-")
       .toLowerCase();
   }
 
@@ -879,49 +880,55 @@
     { slug: "legal-notice", attr: "data-legal-notice" },
   ];
 
-  FOOTER_NEWS_LINKS.forEach(function (link) {
-    var index = newsItems.findIndex(function (item) {
-      return item.slug === normalizeNewsSlug(link.slug);
-    });
-    if (index < 0) return;
-    var btns = document.querySelectorAll(
-      ".footer-content [" + link.attr + "], [" + link.attr + "]",
-    );
-    if (!btns.length) return;
-    var TAP_TOLERANCE = 10;
-    btns.forEach(function (btn) {
-      btn.style.cursor = "pointer";
-      var open = function (ev) {
-        ev.preventDefault();
-        if (mode) {
-          closePopup();
-          setTimeout(function () {
-            openPopup("news", index);
-          }, CLOSE_DELAY);
-        } else {
-          openPopup("news", index);
-        }
-      };
-      var touchStartX = 0,
-        touchStartY = 0;
-      btn.addEventListener(
-        "touchstart",
-        function (ev) {
-          var t = ev.touches[0];
-          touchStartX = t.clientX;
-          touchStartY = t.clientY;
-        },
-        { passive: true },
-      );
-      btn.addEventListener("touchend", function (ev) {
-        var t = ev.changedTouches[0];
-        var dx = t.clientX - touchStartX;
-        var dy = t.clientY - touchStartY;
-        if (Math.sqrt(dx * dx + dy * dy) < TAP_TOLERANCE) open(ev);
-      });
-      btn.addEventListener("click", open);
-    });
+  document.querySelectorAll(
+    FOOTER_NEWS_LINKS.map(function (link) {
+      return "[" + link.attr + "]";
+    }).join(", "),
+  ).forEach(function (btn) {
+    btn.style.cursor = "pointer";
   });
+
+  document.addEventListener(
+    "click",
+    function (ev) {
+      if (!ev.target.closest) return;
+      var btn = ev.target.closest(
+        FOOTER_NEWS_LINKS.map(function (link) {
+          return "[" + link.attr + "]";
+        }).join(", "),
+      );
+      if (!btn) return;
+      var link = FOOTER_NEWS_LINKS.find(function (item) {
+        return btn.hasAttribute(item.attr);
+      });
+      if (!link) return;
+      var slug = normalizeNewsSlug(btn.getAttribute(link.attr)) || link.slug;
+      var index = newsItems.findIndex(function (item) {
+        return (
+          item.slug === normalizeNewsSlug(link.slug) ||
+          item.slug === slug ||
+          normalizeNewsSlug(item.title) === normalizeNewsSlug(link.slug)
+        );
+      });
+      if (index < 0) {
+        console.warn(
+          "Footer lightbox link has no matching news item:",
+          link.slug,
+        );
+        return;
+      }
+      ev.preventDefault();
+      if (mode) {
+        closePopup();
+        setTimeout(function () {
+          openPopup("news", index);
+        }, CLOSE_DELAY);
+      } else {
+        openPopup("news", index);
+      }
+    },
+    true,
+  );
 
   var handles = products
     .map(function (p) {
