@@ -360,15 +360,32 @@
     };
   });
 
+  function normalizeNewsSlug(value) {
+    return String(value || "")
+      .trim()
+      .replace(/^https?:\/\/[^/]+/i, "")
+      .split(/[?#]/, 1)[0]
+      .replace(/\/+$/, "")
+      .split("/")
+      .pop()
+      .replace(/\.html?$/i, "")
+      .toLowerCase();
+  }
+
   var newsItems = Array.from(newsRows).map((el) => {
     var dateEl = el.querySelector(".news--date-container .small-text");
     var titleEl = el.querySelector(".medium-text");
     var dataEl = el.querySelector(".news-data");
     var bodyEl = el.querySelector(".news-body-content");
+    var slug =
+      el.dataset.newsSlug ||
+      dataEl?.dataset.newsSlug ||
+      el.querySelector("a[href]")?.getAttribute("href") ||
+      "";
     return {
       date: dateEl?.textContent || "",
       title: titleEl?.textContent || "",
-      slug: el.dataset.newsSlug || dataEl?.dataset.newsSlug || "",
+      slug: normalizeNewsSlug(slug),
       image: dataEl?.dataset.newsImage || "",
       body: bodyEl?.innerHTML || "",
     };
@@ -859,14 +876,12 @@
     { slug: "privacy-policy", attr: "data-privacy" },
     { slug: "counterfeit-notice", attr: "data-counterfeit" },
     { slug: "return-and-shipping-policy", attr: "data-shipping-policy" },
+    { slug: "legal-notice", attr: "data-legal-notice" },
   ];
 
   FOOTER_NEWS_LINKS.forEach(function (link) {
-    var index = -1;
-    newsItems.forEach(function (item, i) {
-      if (item.slug === link.slug) {
-        index = i;
-      }
+    var index = newsItems.findIndex(function (item) {
+      return item.slug === normalizeNewsSlug(link.slug);
     });
     if (index < 0) return;
     var btns = document.querySelectorAll(
