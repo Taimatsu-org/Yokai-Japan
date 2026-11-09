@@ -153,7 +153,7 @@
       .bf-pop__card{max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px)}
       .bf-pop__scroll{grid-template-columns:1fr}
       .bf-pop__visual{display:none}
-      .bf-pop__body{padding:20px 28px calc(18px + env(safe-area-inset-bottom))}
+      .bf-pop__body{padding:20px 28px calc(14px + env(safe-area-inset-bottom))}
       .bf-pop__date,.bf-pop__title{padding-right:${CLOSE_CLEARANCE}px}
       .bf-pop__title{font-size:26px;margin-bottom:6px}
       .bf-pop__lead{margin-bottom:10px}
