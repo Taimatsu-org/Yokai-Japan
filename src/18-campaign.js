@@ -14,6 +14,8 @@
   const MOBILE_QUERY = '(max-width: 767px)';
   const NARROW_QUERY = '(max-width: 374px)';
   const SHORT_QUERY = '(max-height: 560px)';
+  const NARROW_SHORT_QUERY = '(max-width: 374px) and (max-height: 640px)';
+  const CLOSE_CLEARANCE = 72;
   const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
   const READY_POLL_INTERVAL = 250;
   const READY_POLL_LIMIT = 80;
@@ -27,9 +29,12 @@
   const DURATION = { backdrop: 600, card: 900, close: 520 };
   const EASE_OUT = 'cubic-bezier(0.16, 1, 0.3, 1)';
   const EASE_IN = 'cubic-bezier(0.7, 0, 0.84, 0)';
-  const COLORS = { terra: '#B15A3D', wine: '#7A3036', cream: '#F5EFE1', ink: '#1E1C20', backdrop: 'rgba(20, 16, 18, 0.5)', rule: 'rgba(30, 28, 32, 0.12)', handle: 'rgba(30, 28, 32, 0.35)' };
+  const COLORS = { terra: '#B15A3D', terraSmall: '#A5512F', wine: '#7A3036', cream: '#F5EFE1', ink: '#1E1C20', backdrop: 'rgba(20, 16, 18, 0.5)', rule: 'rgba(30, 28, 32, 0.12)', handle: 'rgba(30, 28, 32, 0.35)' };
   const FONTS = { title: "Optima, 'Palatino Linotype', sans-serif", text: 'ibm-plex-sans-jp, sans-serif' };
   const TRACK_EVENT = 'yokai_campaign';
+  const SITE_CLOSE_CLASS = 'close-svg';
+  const SITE_CLOSE_ICON_CLASS = 'close-x';
+  const ACTIVATE_KEYS = ['Enter', ' '];
 
   const SELECTORS = {
     loader: '.yokai-loader',
@@ -111,24 +116,20 @@
     .bf-pop__visual{position:relative;overflow:hidden}
     .bf-pop__visual img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 46%}
     .bf-pop__body{display:flex;flex-direction:column;padding:52px 48px 44px}
-    .bf-pop__date{font:400 11px/1 ${FONTS.text};letter-spacing:.24em;color:${COLORS.terra};margin:0 0 14px}
+    .bf-pop__date{font:400 11px/1 ${FONTS.text};letter-spacing:.24em;color:${COLORS.terraSmall};margin:0 0 14px}
     .bf-pop__title{font:400 40px/1.05 ${FONTS.title};letter-spacing:.04em;color:${COLORS.terra};margin:0 0 16px}
     .bf-pop__lead{font:400 13px/1.9 ${FONTS.text};letter-spacing:.04em;margin:0 0 26px}
     .bf-pop__gifts{list-style:none;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:0 0 22px;padding:22px 0 0;border-top:1px solid ${COLORS.rule};text-align:center}
     .bf-pop__gift-img{height:88px;display:flex;align-items:flex-end;justify-content:center;margin-bottom:12px}
     .bf-pop__gift-img img{max-width:100%;max-height:100%;object-fit:contain;mix-blend-mode:multiply}
     .bf-pop__gift-img img.is-compact{max-height:58%}
-    .bf-pop__gift-buy{display:block;font:400 10.5px/1.4 ${FONTS.text};letter-spacing:.12em;color:${COLORS.terra};margin-bottom:4px}
+    .bf-pop__gift-buy{display:block;font:400 10.5px/1.4 ${FONTS.text};letter-spacing:.12em;color:${COLORS.terraSmall};margin-bottom:4px}
     .bf-pop__gift-name{display:block;font:400 14px/1.4 ${FONTS.title};color:${COLORS.ink}}
     .bf-pop__note{font:400 11px/1.9 ${FONTS.text};letter-spacing:.04em;opacity:.75;margin:0 0 26px}
     .bf-pop__cta{all:unset;box-sizing:border-box;align-self:flex-start;padding:16px 32px;background:${COLORS.ink};color:${COLORS.cream};font:400 12px/1 ${FONTS.text};letter-spacing:.16em;cursor:pointer;transition:opacity .3s}
     .bf-pop__cta:hover{opacity:.85}
     .bf-pop__cta:focus-visible{outline:1px solid ${COLORS.ink};outline-offset:3px}
-    .bf-pop__close{all:unset;position:absolute;top:22px;right:20px;width:44px;height:28px;cursor:pointer;z-index:2}
-    .bf-pop__close::before,.bf-pop__close::after{content:'';position:absolute;left:0;right:0;top:50%;height:1px;background:${COLORS.ink}}
-    .bf-pop__close::before{transform:rotate(18deg)}
-    .bf-pop__close::after{transform:rotate(-18deg)}
-    .bf-pop__close:focus-visible{outline:1px solid ${COLORS.ink};outline-offset:4px}
+    .bf-pop__close:focus-visible{outline:1px solid ${COLORS.ink};outline-offset:-8px}
     .bf-pop__handle{display:none}
     @media ${MOBILE_QUERY}{
       .bf-pop{align-items:flex-end}
@@ -144,18 +145,24 @@
       .bf-pop__gift-name{font-size:13px}
       .bf-pop__note{font-size:10.5px;margin-bottom:18px}
       .bf-pop__cta{align-self:stretch;text-align:center}
-      .bf-pop__close{top:16px;right:14px;width:36px}
       .bf-pop__handle{display:block;position:absolute;top:8px;left:50%;width:36px;height:3px;margin-left:-18px;background:${COLORS.handle};z-index:2}
     }
     @media ${SHORT_QUERY}{
+      .bf-pop__card{max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px)}
       .bf-pop__scroll{grid-template-columns:1fr}
       .bf-pop__visual{display:none}
-      .bf-pop__body{padding:28px 28px calc(24px + env(safe-area-inset-bottom))}
-      .bf-pop__title{font-size:28px;margin-bottom:8px}
-      .bf-pop__lead{margin-bottom:14px}
-      .bf-pop__gifts{padding-top:14px;margin-bottom:14px}
-      .bf-pop__gift-img{height:56px}
-      .bf-pop__note{margin-bottom:16px}
+      .bf-pop__body{padding:20px 28px calc(18px + env(safe-area-inset-bottom))}
+      .bf-pop__date,.bf-pop__title{padding-right:${CLOSE_CLEARANCE}px}
+      .bf-pop__title{font-size:26px;margin-bottom:6px}
+      .bf-pop__lead{margin-bottom:10px}
+      .bf-pop__gifts{padding-top:10px;margin-bottom:10px}
+      .bf-pop__gift-img{height:40px;margin-bottom:6px}
+      .bf-pop__note{margin-bottom:12px}
+    }
+    @media ${NARROW_SHORT_QUERY}{
+      .bf-pop__visual{display:none}
+      .bf-pop__date,.bf-pop__title{padding-right:${CLOSE_CLEARANCE}px}
+      .bf-pop__title{font-size:26px}
     }
     @media ${REDUCED_MOTION_QUERY}{.bf-pop__card{transform:none!important;transition:opacity ${DURATION.backdrop}ms linear!important}}
   `;
@@ -195,7 +202,7 @@
   const renderBar = () => {
     const bar = element('div', 'bf-bar');
     bar.innerHTML = `<button type="button" class="bf-bar__inner" data-bf-open="bar"><span class="bf-bar__name">${copy.name}</span><span class="bf-bar__sep" aria-hidden="true">|</span><span>${copy.dates}</span><span class="bf-bar__sep bf-bar__wide" aria-hidden="true">|</span><span class="bf-bar__wide">${copy.barLine}</span><span class="bf-bar__more">${copy.barMore}</span></button>`;
-    document.body.appendChild(bar);
+    document.body.prepend(bar);
     refs.bar = bar;
   };
 
@@ -203,7 +210,7 @@
     const gifts = copy.gifts.map((gift) => `<li><div class="bf-pop__gift-img"><img src="${IMAGES[gift.image]}" alt="" decoding="async"${gift.compact ? ' class="is-compact"' : ''}></div><span class="bf-pop__gift-buy">${gift.buy}</span><span class="bf-pop__gift-name">${gift.name}</span></li>`).join('');
     const popup = element('div', 'bf-pop');
     popup.setAttribute('aria-hidden', 'true');
-    popup.innerHTML = `<div class="bf-pop__backdrop" data-bf-close="backdrop"></div><div class="bf-pop__card" role="dialog" aria-modal="true" aria-labelledby="bf-pop-title" tabindex="-1" data-lenis-prevent><span class="bf-pop__handle" aria-hidden="true"></span><button type="button" class="bf-pop__close" data-bf-close="button" aria-label="${copy.close}"></button><div class="bf-pop__scroll" data-lenis-prevent><div class="bf-pop__visual"><img src="${IMAGES.visual}" alt="" decoding="async"></div><div class="bf-pop__body"><p class="bf-pop__date">${copy.dates}</p><h2 class="bf-pop__title" id="bf-pop-title">${copy.name}</h2><p class="bf-pop__lead">${copy.lead}</p><ul class="bf-pop__gifts">${gifts}</ul><p class="bf-pop__note">${copy.note}</p><button type="button" class="bf-pop__cta" data-bf-stores="popup">${copy.cta}</button></div></div></div>`;
+    popup.innerHTML = `<div class="bf-pop__backdrop" data-bf-close="backdrop"></div><div class="bf-pop__card" role="dialog" aria-modal="true" aria-labelledby="bf-pop-title" tabindex="-1" data-lenis-prevent><span class="bf-pop__handle" aria-hidden="true"></span><div class="${SITE_CLOSE_CLASS} bf-pop__close" role="button" tabindex="0" data-bf-close="button" aria-label="${copy.close}"><div class="${SITE_CLOSE_ICON_CLASS}" aria-hidden="true"><div></div><div></div></div></div><div class="bf-pop__scroll" data-lenis-prevent><div class="bf-pop__visual"><img src="${IMAGES.visual}" alt="" decoding="async"></div><div class="bf-pop__body"><p class="bf-pop__date">${copy.dates}</p><h2 class="bf-pop__title" id="bf-pop-title">${copy.name}</h2><p class="bf-pop__lead">${copy.lead}</p><ul class="bf-pop__gifts">${gifts}</ul><p class="bf-pop__note">${copy.note}</p><button type="button" class="bf-pop__cta" data-bf-stores="popup">${copy.cta}</button></div></div></div>`;
     const texture = document.querySelector(SELECTORS.texture);
     const textureImage = texture ? window.getComputedStyle(texture).backgroundImage : 'none';
     if (textureImage && textureImage !== 'none') popup.style.setProperty('--bf-texture', textureImage);
@@ -296,6 +303,12 @@
       close('escape');
       return;
     }
+    const keyCloser = event.target.closest && event.target.closest('[data-bf-close]');
+    if (keyCloser && ACTIVATE_KEYS.includes(event.key)) {
+      event.preventDefault();
+      close(keyCloser.getAttribute('data-bf-close'));
+      return;
+    }
     if (event.key !== 'Tab') return;
     const items = focusables();
     if (!items.length) return;
@@ -337,7 +350,7 @@
   const pageReady = () => {
     const loader = document.querySelector(SELECTORS.loader);
     const loaderDone = !loader || window.getComputedStyle(loader).display === 'none';
-    return loaderDone && !document.documentElement.classList.contains(LOADING_CLASS);
+    return document.readyState === 'complete' && loaderDone && !document.documentElement.classList.contains(LOADING_CLASS);
   };
 
   const whenPageReady = (callback, attempt = 0) => {
