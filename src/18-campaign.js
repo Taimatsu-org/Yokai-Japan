@@ -13,6 +13,8 @@
   const NARROW_QUERY = '(max-width: 374px)';
   const SHORT_QUERY = '(max-height: 560px)';
   const NARROW_SHORT_QUERY = '(max-width: 374px) and (max-height: 640px)';
+  const COMPACT_PHONE_QUERY = '(max-width: 767px) and (max-height: 700px)';
+  const COMPACT_VISUAL_HEIGHT = 112;
   const CLOSE_CLEARANCE = 72;
   const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
   const READY_POLL_INTERVAL = 250;
@@ -146,6 +148,7 @@
       .bf-pop__cta{align-self:stretch;text-align:center}
       .bf-pop__handle{display:block;position:absolute;top:8px;left:50%;width:36px;height:3px;margin-left:-18px;background:${COLORS.handle};z-index:2}
     }
+    @media ${COMPACT_PHONE_QUERY}{.bf-pop__visual{height:${COMPACT_VISUAL_HEIGHT}px}}
     @media ${SHORT_QUERY}{
       .bf-pop__card{max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px)}
       .bf-pop__scroll{grid-template-columns:1fr}
