@@ -119,6 +119,7 @@
     .bf-pop__date{font:400 11px/1 ${FONTS.text};letter-spacing:.24em;color:${COLORS.terraSmall};margin:0 0 14px}
     .bf-pop__title{font:400 40px/1.05 ${FONTS.title};letter-spacing:.04em;color:${COLORS.terra};margin:0 0 16px}
     .bf-pop__lead{font:400 13px/1.9 ${FONTS.text};letter-spacing:.04em;margin:0 0 26px}
+    .bf-pop__lead,.bf-pop__note{word-break:keep-all;overflow-wrap:anywhere}
     .bf-pop__gifts{list-style:none;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:0 0 22px;padding:22px 0 0;border-top:1px solid ${COLORS.rule};text-align:center}
     .bf-pop__gift-img{height:88px;display:flex;align-items:flex-end;justify-content:center;margin-bottom:12px}
     .bf-pop__gift-img img{max-width:100%;max-height:100%;object-fit:contain}
