@@ -201,8 +201,21 @@
   };
 
   const setLabel = (node, text) => {
-    const label = node.querySelector(SELECTORS.heroButtonShimmer) || node.querySelector(SELECTORS.heroButtonText) || node;
-    label.textContent = text;
+    const shimmer = node.querySelector(SELECTORS.heroButtonShimmer);
+    const base = node.querySelector(SELECTORS.heroButtonText) || node;
+    const original = (shimmer || base).textContent.trim();
+    const walker = document.createTreeWalker(base, NodeFilter.SHOW_TEXT);
+    const matches = [];
+    while (walker.nextNode()) {
+      if (walker.currentNode.textContent.trim() === original) matches.push(walker.currentNode);
+    }
+    if (!matches.length) {
+      base.textContent = text;
+      return;
+    }
+    matches.forEach((textNode) => {
+      textNode.textContent = text;
+    });
   };
 
   const applyHeroCopy = () => {
