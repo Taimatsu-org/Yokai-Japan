@@ -5,15 +5,15 @@
   const CAMPAIGN_ID = 'bf2026';
   const STORAGE_KEY = `yokai-campaign-${CAMPAIGN_ID}-closed`;
   const FORCE_OPEN_HASH = '#black-friday';
-  const PENDING_CLASS = 'bf-pending';
   const LOADING_CLASS = 'is-loading';
   const VISIBLE_CLASS = 'is-visible';
   const OPEN_CLASS = 'is-open';
   const CLOSING_CLASS = 'is-closing';
   const DRAGGING_CLASS = 'is-dragging';
-  const APPLIED_ATTR = 'data-bf-applied';
   const JA_PATH_PATTERN = /^\/ja(\/|$)/;
   const MOBILE_QUERY = '(max-width: 767px)';
+  const NARROW_QUERY = '(max-width: 374px)';
+  const SHORT_QUERY = '(max-height: 560px)';
   const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
   const READY_POLL_INTERVAL = 250;
   const READY_POLL_LIMIT = 80;
@@ -28,19 +28,11 @@
   const EASE_OUT = 'cubic-bezier(0.16, 1, 0.3, 1)';
   const EASE_IN = 'cubic-bezier(0.7, 0, 0.84, 0)';
   const COLORS = { terra: '#B15A3D', wine: '#7A3036', cream: '#F5EFE1', ink: '#1E1C20', backdrop: 'rgba(20, 16, 18, 0.5)', rule: 'rgba(30, 28, 32, 0.12)', handle: 'rgba(30, 28, 32, 0.35)' };
-  const FONTS = { title: "Optima, 'Palatino Linotype', serif", text: 'ibm-plex-sans-jp, sans-serif' };
+  const FONTS = { title: "Optima, 'Palatino Linotype', sans-serif", text: 'ibm-plex-sans-jp, sans-serif' };
   const TRACK_EVENT = 'yokai_campaign';
 
   const SELECTORS = {
     loader: '.yokai-loader',
-    heroContainers: '.hero--content-container',
-    heroWrapper: ':scope > .hero--text-wrapper',
-    heroHeading: ':scope > .heading-medium',
-    heroLine: ':scope > .small-text',
-    heroButton: ':scope > .secondary--button',
-    heroLabel: ':scope > .small-text',
-    heroButtonShimmer: '.shimmer-overlay',
-    heroButtonText: '.small-text',
     storesLink: '.nav-link[data-section="stores"]',
     storeSection: '#store',
     topChrome: ['.sticky-nav', '.cart-and-locale'],
@@ -62,10 +54,6 @@
       dates: '11.11 – 11.30',
       barLine: '香水のご購入で、店舗限定ギフト',
       barMore: '詳しく見る',
-      heroDate: '11.11 — 11.30',
-      heroLine: '香水のご購入本数に応じて、<br>店舗限定のギフトをお贈りします。',
-      heroGifts: 'ギフトを見る',
-      heroStores: '店舗を探す',
       lead: '期間中、香水のご購入本数に応じて、店舗限定のギフトをお贈りします。',
       gifts: [
         { buy: '2本ご購入で', name: '練り香水', image: 'solid', compact: true },
@@ -81,10 +69,6 @@
       dates: '11.11 – 11.30',
       barLine: 'Gifts with purchase, in store only',
       barMore: 'See the gifts',
-      heroDate: '11.11 — 11.30',
-      heroLine: 'Gifts with your perfume purchase,<br>in store only.',
-      heroGifts: 'See the gifts',
-      heroStores: 'Find a store',
       lead: 'Buy perfume at our stores and receive a gift, depending on how many you buy.',
       gifts: [
         { buy: 'Buy 2', name: 'Solid perfume', image: 'solid', compact: true },
@@ -113,19 +97,18 @@
     .bf-bar__sep{opacity:.45}
     .bf-bar__more{border-bottom:1px solid rgba(245,239,225,.55);padding-bottom:2px}
     @media ${MOBILE_QUERY}{.bf-bar__inner{gap:10px;font-size:10.5px}.bf-bar__name{font-size:12.5px}.bf-bar__wide{display:none}}
-    html.${PENDING_CLASS} .hero--content-container{visibility:hidden}
-    .bf-hero-date{letter-spacing:.24em;margin-bottom:14px}
-    .bf-hero-ctas{display:flex;flex-wrap:wrap;gap:24px}
+    @media ${NARROW_QUERY}{.bf-bar__inner{gap:8px;padding:0 10px;letter-spacing:.06em}.bf-bar__name{letter-spacing:.14em}}
     .bf-pop{position:fixed;inset:0;z-index:${Z_INDEX.popup};display:flex;align-items:center;justify-content:center;visibility:hidden;pointer-events:none}
     .bf-pop.${VISIBLE_CLASS}{visibility:visible}
     .bf-pop.${OPEN_CLASS}{pointer-events:auto}
-    .bf-pop__backdrop{position:absolute;inset:0;background:${COLORS.backdrop};opacity:0;transition:opacity ${DURATION.backdrop}ms ${EASE_OUT}}
+    .bf-pop__backdrop{position:absolute;inset:0;background:${COLORS.backdrop};opacity:0;touch-action:none;transition:opacity ${DURATION.backdrop}ms ${EASE_OUT}}
     .bf-pop.${OPEN_CLASS} .bf-pop__backdrop{opacity:1}
-    .bf-pop__card{position:relative;display:grid;grid-template-columns:38% 1fr;width:min(880px,calc(100vw - 64px));max-height:calc(100vh - 64px);overflow:auto;overscroll-behavior:contain;background:${COLORS.cream} var(--bf-texture,none) center/cover;color:${COLORS.ink};opacity:0;transform:translateY(24px);transition:opacity ${DURATION.card}ms ${EASE_OUT},transform ${DURATION.card}ms ${EASE_OUT};outline:none}
+    .bf-pop__card{position:relative;display:flex;width:min(880px,calc(100vw - 64px));max-height:calc(100vh - 64px);max-height:calc(100dvh - 64px);background:${COLORS.cream} var(--bf-texture,none) center/cover;color:${COLORS.ink};opacity:0;transform:translateY(24px);transition:opacity ${DURATION.card}ms ${EASE_OUT},transform ${DURATION.card}ms ${EASE_OUT};outline:none}
     .bf-pop.${OPEN_CLASS} .bf-pop__card{opacity:1;transform:none}
     .bf-pop.${CLOSING_CLASS} .bf-pop__card,.bf-pop.${CLOSING_CLASS} .bf-pop__backdrop{transition-duration:${DURATION.close}ms;transition-timing-function:${EASE_IN}}
     .bf-pop.${DRAGGING_CLASS} .bf-pop__card{transition:none}
-    .bf-pop__visual{position:relative;min-height:440px;overflow:hidden}
+    .bf-pop__scroll{display:grid;grid-template-columns:38% 1fr;width:100%;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+    .bf-pop__visual{position:relative;overflow:hidden}
     .bf-pop__visual img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 46%}
     .bf-pop__body{display:flex;flex-direction:column;padding:52px 48px 44px}
     .bf-pop__date{font:400 11px/1 ${FONTS.text};letter-spacing:.24em;color:${COLORS.terra};margin:0 0 14px}
@@ -149,9 +132,10 @@
     .bf-pop__handle{display:none}
     @media ${MOBILE_QUERY}{
       .bf-pop{align-items:flex-end}
-      .bf-pop__card{grid-template-columns:1fr;width:100%;max-height:88vh;opacity:1;transform:translateY(100%)}
-      .bf-pop__visual{min-height:0;height:168px}
-      .bf-pop__body{padding:22px 20px 26px}
+      .bf-pop__card{width:100%;max-height:88vh;max-height:88dvh;opacity:1;transform:translateY(100%)}
+      .bf-pop__scroll{grid-template-columns:1fr}
+      .bf-pop__visual{height:168px}
+      .bf-pop__body{padding:22px 20px calc(26px + env(safe-area-inset-bottom))}
       .bf-pop__date{margin-bottom:10px}
       .bf-pop__title{font-size:30px;margin-bottom:10px}
       .bf-pop__lead{font-size:12.5px;line-height:1.8;margin-bottom:16px}
@@ -162,6 +146,16 @@
       .bf-pop__cta{align-self:stretch;text-align:center}
       .bf-pop__close{top:16px;right:14px;width:36px}
       .bf-pop__handle{display:block;position:absolute;top:8px;left:50%;width:36px;height:3px;margin-left:-18px;background:${COLORS.handle};z-index:2}
+    }
+    @media ${SHORT_QUERY}{
+      .bf-pop__scroll{grid-template-columns:1fr}
+      .bf-pop__visual{display:none}
+      .bf-pop__body{padding:28px 28px calc(24px + env(safe-area-inset-bottom))}
+      .bf-pop__title{font-size:28px;margin-bottom:8px}
+      .bf-pop__lead{margin-bottom:14px}
+      .bf-pop__gifts{padding-top:14px;margin-bottom:14px}
+      .bf-pop__gift-img{height:56px}
+      .bf-pop__note{margin-bottom:16px}
     }
     @media ${REDUCED_MOTION_QUERY}{.bf-pop__card{transform:none!important;transition:opacity ${DURATION.backdrop}ms linear!important}}
   `;
@@ -198,57 +192,6 @@
     document.head.appendChild(element('style', '', css));
   };
 
-  const setLabel = (node, text) => {
-    const shimmer = node.querySelector(SELECTORS.heroButtonShimmer);
-    const base = node.querySelector(SELECTORS.heroButtonText) || node;
-    const original = (shimmer || base).textContent.trim();
-    const walker = document.createTreeWalker(base, NodeFilter.SHOW_TEXT);
-    const matches = [];
-    while (walker.nextNode()) {
-      if (walker.currentNode.textContent.trim() === original) matches.push(walker.currentNode);
-    }
-    if (!matches.length) {
-      base.textContent = text;
-      return;
-    }
-    matches.forEach((textNode) => {
-      textNode.textContent = text;
-    });
-  };
-
-  const applyHeroCopy = () => {
-    document.querySelectorAll(SELECTORS.heroContainers).forEach((container) => {
-      if (container.hasAttribute(APPLIED_ATTR)) return;
-      container.setAttribute(APPLIED_ATTR, '');
-      const wrapper = container.querySelector(SELECTORS.heroWrapper);
-      if (!wrapper) return;
-      const heading = wrapper.querySelector(SELECTORS.heroHeading);
-      const line = wrapper.querySelector(SELECTORS.heroLine);
-      const button = container.querySelector(SELECTORS.heroButton);
-      const label = container.querySelector(SELECTORS.heroLabel);
-      if (!heading || !line) return;
-      const date = element('div', 'small-text bf-hero-date', copy.heroDate);
-      heading.before(date);
-      heading.textContent = copy.name;
-      line.innerHTML = copy.heroLine;
-      const primary = button || label;
-      if (!primary) return;
-      const secondary = primary.cloneNode(true);
-      setLabel(primary, copy.heroGifts);
-      setLabel(secondary, copy.heroStores);
-      if (button) {
-        primary.setAttribute('data-bf-open', 'hero');
-        primary.removeAttribute('data-section');
-        secondary.setAttribute('data-bf-stores', 'hero');
-        secondary.removeAttribute('data-section');
-      }
-      const row = element('div', 'bf-hero-ctas');
-      primary.before(row);
-      row.append(primary, secondary);
-    });
-    document.documentElement.classList.remove(PENDING_CLASS);
-  };
-
   const renderBar = () => {
     const bar = element('div', 'bf-bar');
     bar.innerHTML = `<button type="button" class="bf-bar__inner" data-bf-open="bar"><span class="bf-bar__name">${copy.name}</span><span class="bf-bar__sep" aria-hidden="true">|</span><span>${copy.dates}</span><span class="bf-bar__sep bf-bar__wide" aria-hidden="true">|</span><span class="bf-bar__wide">${copy.barLine}</span><span class="bf-bar__more">${copy.barMore}</span></button>`;
@@ -260,13 +203,14 @@
     const gifts = copy.gifts.map((gift) => `<li><div class="bf-pop__gift-img"><img src="${IMAGES[gift.image]}" alt="" decoding="async"${gift.compact ? ' class="is-compact"' : ''}></div><span class="bf-pop__gift-buy">${gift.buy}</span><span class="bf-pop__gift-name">${gift.name}</span></li>`).join('');
     const popup = element('div', 'bf-pop');
     popup.setAttribute('aria-hidden', 'true');
-    popup.innerHTML = `<div class="bf-pop__backdrop" data-bf-close="backdrop"></div><div class="bf-pop__card" role="dialog" aria-modal="true" aria-labelledby="bf-pop-title" tabindex="-1" data-lenis-prevent><span class="bf-pop__handle" aria-hidden="true"></span><button type="button" class="bf-pop__close" data-bf-close="button" aria-label="${copy.close}"></button><div class="bf-pop__visual"><img src="${IMAGES.visual}" alt="" decoding="async"></div><div class="bf-pop__body"><p class="bf-pop__date">${copy.dates}</p><h2 class="bf-pop__title" id="bf-pop-title">${copy.name}</h2><p class="bf-pop__lead">${copy.lead}</p><ul class="bf-pop__gifts">${gifts}</ul><p class="bf-pop__note">${copy.note}</p><button type="button" class="bf-pop__cta" data-bf-stores="popup">${copy.cta}</button></div></div>`;
+    popup.innerHTML = `<div class="bf-pop__backdrop" data-bf-close="backdrop"></div><div class="bf-pop__card" role="dialog" aria-modal="true" aria-labelledby="bf-pop-title" tabindex="-1" data-lenis-prevent><span class="bf-pop__handle" aria-hidden="true"></span><button type="button" class="bf-pop__close" data-bf-close="button" aria-label="${copy.close}"></button><div class="bf-pop__scroll" data-lenis-prevent><div class="bf-pop__visual"><img src="${IMAGES.visual}" alt="" decoding="async"></div><div class="bf-pop__body"><p class="bf-pop__date">${copy.dates}</p><h2 class="bf-pop__title" id="bf-pop-title">${copy.name}</h2><p class="bf-pop__lead">${copy.lead}</p><ul class="bf-pop__gifts">${gifts}</ul><p class="bf-pop__note">${copy.note}</p><button type="button" class="bf-pop__cta" data-bf-stores="popup">${copy.cta}</button></div></div></div>`;
     const texture = document.querySelector(SELECTORS.texture);
     const textureImage = texture ? window.getComputedStyle(texture).backgroundImage : 'none';
     if (textureImage && textureImage !== 'none') popup.style.setProperty('--bf-texture', textureImage);
     document.body.appendChild(popup);
     refs.popup = popup;
     refs.card = popup.querySelector('.bf-pop__card');
+    refs.scroll = popup.querySelector('.bf-pop__scroll');
   };
 
   const barHeight = () => (mobile.matches ? BAR_HEIGHT.mobile : BAR_HEIGHT.desktop);
@@ -367,7 +311,7 @@
   };
 
   const onTouchStart = (event) => {
-    if (!mobile.matches || !state.open || refs.card.scrollTop > 0) return;
+    if (!mobile.matches || !state.open || refs.scroll.scrollTop > 0) return;
     state.dragStart = event.touches[0].clientY;
     state.dragDistance = 0;
   };
@@ -430,7 +374,6 @@
 
   const start = () => {
     injectStyles();
-    applyHeroCopy();
     renderBar();
     renderPopup();
     preloadImages();
