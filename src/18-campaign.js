@@ -3,8 +3,6 @@
   if (!PREVIEW_HOST_PATTERN.test(window.location.hostname)) return;
 
   const CAMPAIGN_ID = 'bf2026';
-  const STORAGE_KEY = `yokai-campaign-${CAMPAIGN_ID}-closed`;
-  const FORCE_OPEN_HASH = '#black-friday';
   const LOADING_CLASS = 'is-loading';
   const VISIBLE_CLASS = 'is-visible';
   const OPEN_CLASS = 'is-open';
@@ -48,9 +46,9 @@
 
   const IMAGES = {
     visual: 'https://cdn.prod.website-files.com/694de20134d7a4afc6818bdd/6af15cc3e91084289f668130_yokai-bf2026-popup-kv.webp',
-    solid: 'https://cdn.prod.website-files.com/694de20134d7a4afc6818bdd/6af15cc3c1534f81549f4953_yokai-bf2026-gift-solid.webp',
-    small: 'https://cdn.prod.website-files.com/694de20134d7a4afc6818bdd/6af15cc3eb2678b37635b696_yokai-bf2026-gift-9ml.webp',
-    large: 'https://cdn.prod.website-files.com/694de20134d7a4afc6818bdd/6af15cc37a181663661a867d_yokai-bf2026-gift-30ml.webp'
+    solid: 'https://cdn.prod.website-files.com/694de20134d7a4afc6818bdd/6af16afa84e7ff9e17c2e41b_yokai-bf2026-gift-solid-alpha.webp',
+    small: 'https://cdn.prod.website-files.com/694de20134d7a4afc6818bdd/6af16afa434edee758053e8e_yokai-bf2026-gift-9ml-alpha.webp',
+    large: 'https://cdn.prod.website-files.com/694de20134d7a4afc6818bdd/6af16afa84e7ff9e17c2e3fe_yokai-bf2026-gift-30ml-alpha.webp'
   };
 
   const COPY = {
@@ -121,7 +119,7 @@
     .bf-pop__lead{font:400 13px/1.9 ${FONTS.text};letter-spacing:.04em;margin:0 0 26px}
     .bf-pop__gifts{list-style:none;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:0 0 22px;padding:22px 0 0;border-top:1px solid ${COLORS.rule};text-align:center}
     .bf-pop__gift-img{height:88px;display:flex;align-items:flex-end;justify-content:center;margin-bottom:12px}
-    .bf-pop__gift-img img{max-width:100%;max-height:100%;object-fit:contain;mix-blend-mode:multiply}
+    .bf-pop__gift-img img{max-width:100%;max-height:100%;object-fit:contain}
     .bf-pop__gift-img img.is-compact{max-height:58%}
     .bf-pop__gift-buy{display:block;font:400 10.5px/1.4 ${FONTS.text};letter-spacing:.12em;color:${COLORS.terraSmall};margin-bottom:4px}
     .bf-pop__gift-name{display:block;font:400 14px/1.4 ${FONTS.title};color:${COLORS.ink}}
@@ -170,22 +168,6 @@
   const track = (action, source) => {
     window.dataLayer = window.dataLayer || [];
     window.dataLayer.push({ event: TRACK_EVENT, campaign: CAMPAIGN_ID, campaign_action: action, campaign_source: source });
-  };
-
-  const closedBefore = () => {
-    try {
-      return window.localStorage.getItem(STORAGE_KEY) === '1';
-    } catch (error) {
-      return false;
-    }
-  };
-
-  const rememberClosed = () => {
-    try {
-      window.localStorage.setItem(STORAGE_KEY, '1');
-    } catch (error) {
-      return;
-    }
   };
 
   const element = (tag, className, html) => {
@@ -257,7 +239,6 @@
   const close = (source, after) => {
     if (!state.open) return;
     state.open = false;
-    rememberClosed();
     refs.popup.classList.add(CLOSING_CLASS);
     refs.popup.classList.remove(OPEN_CLASS);
     refs.popup.setAttribute('aria-hidden', 'true');
@@ -367,7 +348,7 @@
       window.setTimeout(tryAutoOpen, BUSY_RETRY_DELAY);
       return;
     }
-    open(window.location.hash === FORCE_OPEN_HASH ? 'link' : 'auto');
+    open('auto');
   };
 
   const preloadImages = () => {
@@ -397,7 +378,7 @@
     refs.card.addEventListener('touchstart', onTouchStart, { passive: true });
     refs.card.addEventListener('touchmove', onTouchMove, { passive: true });
     refs.card.addEventListener('touchend', onTouchEnd);
-    if (window.location.hash === FORCE_OPEN_HASH || !closedBefore()) whenPageReady(() => window.setTimeout(tryAutoOpen, AUTO_OPEN_DELAY));
+    whenPageReady(() => window.setTimeout(tryAutoOpen, AUTO_OPEN_DELAY));
   };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
