@@ -27,7 +27,7 @@
   const DURATION = { backdrop: 600, card: 900, close: 520 };
   const EASE_OUT = 'cubic-bezier(0.16, 1, 0.3, 1)';
   const EASE_IN = 'cubic-bezier(0.7, 0, 0.84, 0)';
-  const COLORS = { terra: '#B15A3D', wine: '#7A3036', cream: '#F5EFE1', ink: '#1E1C20', backdrop: 'rgba(20, 16, 18, 0.5)', rule: 'rgba(30, 28, 32, 0.12)' };
+  const COLORS = { terra: '#B15A3D', wine: '#7A3036', cream: '#F5EFE1', ink: '#1E1C20', backdrop: 'rgba(20, 16, 18, 0.5)', rule: 'rgba(30, 28, 32, 0.12)', handle: 'rgba(30, 28, 32, 0.35)' };
   const FONTS = { title: "Optima, 'Palatino Linotype', serif", text: 'ibm-plex-sans-jp, sans-serif' };
   const TRACK_EVENT = 'yokai_campaign';
 
@@ -160,10 +160,8 @@
       .bf-pop__gift-name{font-size:13px}
       .bf-pop__note{font-size:10.5px;margin-bottom:18px}
       .bf-pop__cta{align-self:stretch;text-align:center}
-      .bf-pop__close{top:14px;right:14px;width:36px}
-      .bf-pop__close::before,.bf-pop__close::after{background:${COLORS.cream}}
-      .bf-pop__close:focus-visible{outline-color:${COLORS.cream}}
-      .bf-pop__handle{display:block;position:absolute;top:8px;left:50%;width:36px;height:3px;margin-left:-18px;background:rgba(245,239,225,.85);z-index:2}
+      .bf-pop__close{top:16px;right:14px;width:36px}
+      .bf-pop__handle{display:block;position:absolute;top:8px;left:50%;width:36px;height:3px;margin-left:-18px;background:${COLORS.handle};z-index:2}
     }
     @media ${REDUCED_MOTION_QUERY}{.bf-pop__card{transform:none!important;transition:opacity ${DURATION.backdrop}ms linear!important}}
   `;
