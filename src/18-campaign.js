@@ -33,10 +33,12 @@
 
   const SELECTORS = {
     loader: '.yokai-loader',
-    heroWrappers: '.hero--content-container .hero--text-wrapper',
+    heroContainers: '.hero--content-container',
+    heroWrapper: ':scope > .hero--text-wrapper',
     heroHeading: ':scope > .heading-medium',
-    heroTexts: ':scope > .small-text',
+    heroLine: ':scope > .small-text',
     heroButton: ':scope > .secondary--button',
+    heroLabel: ':scope > .small-text',
     heroButtonShimmer: '.shimmer-overlay',
     heroButtonText: '.small-text',
     storesLink: '.nav-link[data-section="stores"]',
@@ -111,7 +113,7 @@
     .bf-bar__sep{opacity:.45}
     .bf-bar__more{border-bottom:1px solid rgba(245,239,225,.55);padding-bottom:2px}
     @media ${MOBILE_QUERY}{.bf-bar__inner{gap:10px;font-size:10.5px}.bf-bar__name{font-size:12.5px}.bf-bar__wide{display:none}}
-    html.${PENDING_CLASS} .hero--text-wrapper{visibility:hidden}
+    html.${PENDING_CLASS} .hero--content-container{visibility:hidden}
     .bf-hero-date{letter-spacing:.24em;margin-bottom:14px}
     .bf-hero-ctas{display:flex;flex-wrap:wrap;gap:24px}
     .bf-pop{position:fixed;inset:0;z-index:${Z_INDEX.popup};display:flex;align-items:center;justify-content:center;visibility:hidden;pointer-events:none}
@@ -204,12 +206,15 @@
   };
 
   const applyHeroCopy = () => {
-    document.querySelectorAll(SELECTORS.heroWrappers).forEach((wrapper) => {
-      if (wrapper.hasAttribute(APPLIED_ATTR)) return;
-      wrapper.setAttribute(APPLIED_ATTR, '');
+    document.querySelectorAll(SELECTORS.heroContainers).forEach((container) => {
+      if (container.hasAttribute(APPLIED_ATTR)) return;
+      container.setAttribute(APPLIED_ATTR, '');
+      const wrapper = container.querySelector(SELECTORS.heroWrapper);
+      if (!wrapper) return;
       const heading = wrapper.querySelector(SELECTORS.heroHeading);
-      const [line, label] = wrapper.querySelectorAll(SELECTORS.heroTexts);
-      const button = wrapper.querySelector(SELECTORS.heroButton);
+      const line = wrapper.querySelector(SELECTORS.heroLine);
+      const button = container.querySelector(SELECTORS.heroButton);
+      const label = container.querySelector(SELECTORS.heroLabel);
       if (!heading || !line) return;
       const date = element('div', 'small-text bf-hero-date', copy.heroDate);
       heading.before(date);
