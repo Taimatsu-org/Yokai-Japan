@@ -59,11 +59,11 @@
       barMore: '詳しく見る',
       lead: '期間中、香水のご購入本数に応じて、店舗限定のギフトをお贈りします。',
       gifts: [
-        { buy: '2本ご購入で', name: '練り香水', image: 'solid', compact: true },
+        { buy: '2本ご購入で', name: '練り香水', mark: '※', image: 'solid', compact: true },
         { buy: '3本ご購入で', name: '香水 9mL', image: 'small', compact: false },
         { buy: '5本ご購入で', name: '香水 30mL', image: 'large', compact: false }
       ],
-      note: 'サイズを問わず対象・ギフトは重ねてお受け取りいただけます。<br>店舗限定（オンラインストアは対象外）・なくなり次第終了',
+      note: 'サイズを問わず対象・ギフトは重ねてお受け取りいただけます。<br>店舗限定（オンラインストアは対象外）・なくなり次第終了<br>※練り香水は在庫に限りがあるため、なくなり次第終了いたします。',
       cta: '店舗を探す',
       close: '閉じる'
     },
@@ -74,11 +74,11 @@
       barMore: 'See the gifts',
       lead: 'Buy perfume at our stores and receive a gift, depending on how many you buy.',
       gifts: [
-        { buy: 'Buy 2', name: 'Solid perfume', image: 'solid', compact: true },
+        { buy: 'Buy 2', name: 'Solid perfume', mark: '*', image: 'solid', compact: true },
         { buy: 'Buy 3', name: '9 mL perfume', image: 'small', compact: false },
         { buy: 'Buy 5', name: '30 mL perfume', image: 'large', compact: false }
       ],
-      note: 'Any size counts. Gifts are cumulative.<br>In store only, not online. While supplies last.',
+      note: 'Any size counts. Gifts are cumulative.<br>In store only, not online. While supplies last.<br>*Solid perfume stock is limited and ends when it runs out.',
       cta: 'Find a store',
       close: 'Close'
     }
@@ -123,6 +123,7 @@
     .bf-pop__gift-img img.is-compact{max-height:58%}
     .bf-pop__gift-buy{display:block;font:400 10.5px/1.4 ${FONTS.text};letter-spacing:.12em;color:${COLORS.terraSmall};margin-bottom:4px}
     .bf-pop__gift-name{display:block;font:400 14px/1.4 ${FONTS.title};color:${COLORS.ink}}
+    .bf-pop__gift-mark{font-size:.7em;line-height:0;vertical-align:super;margin-left:1px}
     .bf-pop__note{font:400 11px/1.9 ${FONTS.text};letter-spacing:.04em;opacity:.75;margin:0 0 26px}
     .bf-pop__cta{all:unset;box-sizing:border-box;align-self:flex-start;padding:16px 32px;background:${COLORS.ink};color:${COLORS.cream};font:400 12px/1 ${FONTS.text};letter-spacing:.16em;cursor:pointer;transition:opacity .3s}
     .bf-pop__cta:hover{opacity:.85}
@@ -189,7 +190,7 @@
   };
 
   const renderPopup = () => {
-    const gifts = copy.gifts.map((gift) => `<li><div class="bf-pop__gift-img"><img src="${IMAGES[gift.image]}" alt="" decoding="async"${gift.compact ? ' class="is-compact"' : ''}></div><span class="bf-pop__gift-buy">${gift.buy}</span><span class="bf-pop__gift-name">${gift.name}</span></li>`).join('');
+    const gifts = copy.gifts.map((gift) => `<li><div class="bf-pop__gift-img"><img src="${IMAGES[gift.image]}" alt="" decoding="async"${gift.compact ? ' class="is-compact"' : ''}></div><span class="bf-pop__gift-buy">${gift.buy}</span><span class="bf-pop__gift-name">${gift.name}${gift.mark ? `<span class="bf-pop__gift-mark">${gift.mark}</span>` : ''}</span></li>`).join('');
     const popup = element('div', 'bf-pop');
     popup.setAttribute('aria-hidden', 'true');
     popup.innerHTML = `<div class="bf-pop__backdrop" data-bf-close="backdrop"></div><div class="bf-pop__card" role="dialog" aria-modal="true" aria-labelledby="bf-pop-title" tabindex="-1" data-lenis-prevent><span class="bf-pop__handle" aria-hidden="true"></span><div class="${SITE_CLOSE_CLASS} bf-pop__close" role="button" tabindex="0" data-bf-close="button" aria-label="${copy.close}"><div class="${SITE_CLOSE_ICON_CLASS}" aria-hidden="true"><div></div><div></div></div></div><div class="bf-pop__scroll" data-lenis-prevent><div class="bf-pop__visual"><img src="${IMAGES.visual}" alt="" decoding="async"></div><div class="bf-pop__body"><p class="bf-pop__date">${copy.dates}</p><h2 class="bf-pop__title" id="bf-pop-title">${copy.name}</h2><p class="bf-pop__lead">${copy.lead}</p><ul class="bf-pop__gifts">${gifts}</ul><p class="bf-pop__note">${copy.note}</p><button type="button" class="bf-pop__cta" data-bf-stores="popup">${copy.cta}</button></div></div></div>`;
