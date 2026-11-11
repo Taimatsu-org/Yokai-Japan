@@ -1,7 +1,4 @@
 (() => {
-  const PREVIEW_HOST_PATTERN = /\.webflow\.io$/;
-  if (!PREVIEW_HOST_PATTERN.test(window.location.hostname)) return;
-
   const CAMPAIGN_ID = 'bf2026';
   const LOADING_CLASS = 'is-loading';
   const VISIBLE_CLASS = 'is-visible';
