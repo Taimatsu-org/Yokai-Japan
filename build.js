@@ -78,3 +78,17 @@ esbuild
     console.error("Error building campaign.min.js:", err);
     process.exit(1);
   });
+
+const giftsSrc = fs.readFileSync(path.join(srcDir, "19-campaign-gifts.js"), "utf8");
+
+esbuild
+  .transform(giftsSrc, { minify: true, target: "es2020" })
+  .then((result) => {
+    fs.writeFileSync(path.join(distDir, "campaign-gifts.min.js"), result.code);
+    const size = (Buffer.byteLength(result.code) / 1024).toFixed(1);
+    console.log(`✓ dist/campaign-gifts.min.js (${size} KB)`);
+  })
+  .catch((err) => {
+    console.error("Error building campaign-gifts.min.js:", err);
+    process.exit(1);
+  });
