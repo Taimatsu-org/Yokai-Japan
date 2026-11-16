@@ -29,18 +29,23 @@
   const COLORS = { terra: '#B15A3D', terraSmall: '#A5512F', wine: '#7A3036', cream: '#F5EFE1', ink: '#1E1C20', backdrop: 'rgba(20, 16, 18, 0.5)', rule: 'rgba(30, 28, 32, 0.12)', handle: 'rgba(30, 28, 32, 0.35)' };
   const FONTS = { title: "Optima, 'Palatino Linotype', sans-serif", text: 'ibm-plex-sans-jp, sans-serif' };
   const TRACK_EVENT = 'yokai_campaign';
+  const AUTO_SOURCE = 'auto';
+  const POPUP_SOURCE = 'popup';
   const SITE_CLOSE_CLASS = 'close-svg';
   const SITE_CLOSE_ICON_CLASS = 'close-x';
   const ACTIVATE_KEYS = ['Enter', ' '];
 
   const SELECTORS = {
     loader: '.yokai-loader',
-    storesLink: '.nav-link[data-section="stores"]',
-    storeSection: '#store',
     topChrome: ['.sticky-nav', '.cart-and-locale'],
     busy: '.popup-overlay.is-active, [data-cart-drawer].is-open',
     texture: '.news--lightbox-content',
     focusable: 'button, [href], [tabindex]:not([tabindex="-1"])'
+  };
+
+  const DESTINATIONS = {
+    shop: { action: 'shop_online', link: '.nav-link[data-section="fragrances"]', section: '#product' },
+    stores: { action: 'find_store', link: '.nav-link[data-section="stores"]', section: '#store' }
   };
 
   const IMAGES = {
@@ -54,31 +59,33 @@
     ja: {
       name: 'BLACK FRIDAY',
       dates: '11.11 – 11.30',
-      barLine: '香水のご購入で、店舗限定ギフト',
+      barLine: 'オンラインストア・店舗で、香水のご購入にギフト',
       barMore: '詳しく見る',
-      lead: '期間中、香水のご購入本数に応じて、店舗限定のギフトをお贈りします。',
+      lead: '期間中、オンラインストアと店舗で、香水のご購入本数に応じてギフトをお贈りします。',
       gifts: [
         { buy: '2本ご購入で', name: '練り香水', mark: '※', image: 'solid', compact: true },
         { buy: '3本ご購入で', name: '香水 9mL', image: 'small', compact: false },
         { buy: '5本ご購入で', name: '香水 30mL', image: 'large', compact: false }
       ],
-      note: 'サイズを問わず対象・ギフトは重ねてお受け取りいただけます。<br>店舗限定（オンラインストアは対象外）・なくなり次第終了<br>※練り香水は在庫に限りがあるため、なくなり次第終了いたします。',
-      cta: '店舗を探す',
+      note: 'サイズを問わず対象・ギフトは重ねてお受け取りいただけます。<br>オンラインストア・店舗共通・なくなり次第終了<br>※練り香水は在庫に限りがあるため、なくなり次第終了いたします。',
+      cta: '香水を見る',
+      ctaStores: '店舗を探す',
       close: '閉じる'
     },
     en: {
       name: 'BLACK FRIDAY',
       dates: '11.11 – 11.30',
-      barLine: 'Gifts with purchase, in store only',
+      barLine: 'Gifts with purchase, online and in store',
       barMore: 'See the gifts',
-      lead: 'Buy perfume at our stores and receive a gift, depending on how many you buy.',
+      lead: 'Buy perfume online or at our stores and receive a gift, depending on how many you buy.',
       gifts: [
         { buy: 'Buy 2', name: 'Solid perfume', mark: '*', image: 'solid', compact: true },
         { buy: 'Buy 3', name: '9 mL perfume', image: 'small', compact: false },
         { buy: 'Buy 5', name: '30 mL perfume', image: 'large', compact: false }
       ],
-      note: 'Any size counts. Gifts are cumulative.<br>In store only, not online. While supplies last.<br>*Solid perfume stock is limited and ends when it runs out.',
-      cta: 'Find a store',
+      note: 'Any size counts. Gifts are cumulative.<br>Online and in store. While supplies last.<br>*Solid perfume stock is limited and ends when it runs out.',
+      cta: 'Shop perfumes',
+      ctaStores: 'Find a store',
       close: 'Close'
     }
   };
@@ -125,7 +132,9 @@
     .bf-pop__gift-name{display:block;font:400 14px/1.4 ${FONTS.title};color:${COLORS.ink}}
     .bf-pop__gift-mark{font-size:.7em;line-height:0;vertical-align:super;margin-left:1px}
     .bf-pop__note{font:400 11px/1.9 ${FONTS.text};letter-spacing:.04em;opacity:.75;margin:0 0 26px}
-    .bf-pop__cta{all:unset;box-sizing:border-box;align-self:flex-start;padding:16px 32px;background:${COLORS.ink};color:${COLORS.cream};font:400 12px/1 ${FONTS.text};letter-spacing:.16em;cursor:pointer;transition:opacity .3s}
+    .bf-pop__actions{display:flex;flex-wrap:wrap;gap:12px}
+    .bf-pop__cta{all:unset;box-sizing:border-box;padding:16px 32px;background:${COLORS.ink};color:${COLORS.cream};font:400 12px/1 ${FONTS.text};letter-spacing:.16em;text-align:center;cursor:pointer;transition:opacity .3s}
+    .bf-pop__cta--ghost{background:transparent;color:${COLORS.ink};box-shadow:inset 0 0 0 1px ${COLORS.ink}}
     .bf-pop__cta:hover{opacity:.85}
     .bf-pop__cta:focus-visible{outline:1px solid ${COLORS.ink};outline-offset:3px}
     .bf-pop__close:focus-visible{outline:1px solid ${COLORS.ink};outline-offset:-8px}
@@ -143,9 +152,11 @@
       .bf-pop__gift-img{height:64px;margin-bottom:8px}
       .bf-pop__gift-name{font-size:13px}
       .bf-pop__note{font-size:10.5px;margin-bottom:18px}
-      .bf-pop__cta{align-self:stretch;text-align:center}
+      .bf-pop__actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+      .bf-pop__cta{padding:16px 8px}
       .bf-pop__handle{display:block;position:absolute;top:8px;left:50%;width:36px;height:3px;margin-left:-18px;background:${COLORS.handle};z-index:2}
     }
+    @media ${NARROW_QUERY}{.bf-pop__cta{letter-spacing:.08em}}
     @media ${COMPACT_PHONE_QUERY}{.bf-pop__visual{height:${COMPACT_VISUAL_HEIGHT}px}}
     @media ${SHORT_QUERY}{
       .bf-pop__card{max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px)}
@@ -169,7 +180,10 @@
 
   const track = (action, source) => {
     window.dataLayer = window.dataLayer || [];
-    window.dataLayer.push({ event: TRACK_EVENT, campaign: CAMPAIGN_ID, campaign_action: action, campaign_source: source });
+    const send = function () {
+      window.dataLayer.push(arguments);
+    };
+    send('event', `${TRACK_EVENT}_${action}`, { campaign: CAMPAIGN_ID, campaign_source: source });
   };
 
   const element = (tag, className, html) => {
@@ -194,7 +208,7 @@
     const gifts = copy.gifts.map((gift) => `<li><div class="bf-pop__gift-img"><img src="${IMAGES[gift.image]}" alt="" decoding="async"${gift.compact ? ' class="is-compact"' : ''}></div><span class="bf-pop__gift-buy">${gift.buy}</span><span class="bf-pop__gift-name">${gift.name}${gift.mark ? `<span class="bf-pop__gift-mark">${gift.mark}</span>` : ''}</span></li>`).join('');
     const popup = element('div', 'bf-pop');
     popup.setAttribute('aria-hidden', 'true');
-    popup.innerHTML = `<div class="bf-pop__backdrop" data-bf-close="backdrop"></div><div class="bf-pop__card" role="dialog" aria-modal="true" aria-labelledby="bf-pop-title" tabindex="-1" data-lenis-prevent><span class="bf-pop__handle" aria-hidden="true"></span><div class="${SITE_CLOSE_CLASS} bf-pop__close" role="button" tabindex="0" data-bf-close="button" aria-label="${copy.close}"><div class="${SITE_CLOSE_ICON_CLASS}" aria-hidden="true"><div></div><div></div></div></div><div class="bf-pop__scroll" data-lenis-prevent><div class="bf-pop__visual"><img src="${IMAGES.visual}" alt="" decoding="async"></div><div class="bf-pop__body"><p class="bf-pop__date">${copy.dates}</p><h2 class="bf-pop__title" id="bf-pop-title">${copy.name}</h2><p class="bf-pop__lead">${copy.lead}</p><ul class="bf-pop__gifts">${gifts}</ul><p class="bf-pop__note">${copy.note}</p><button type="button" class="bf-pop__cta" data-bf-stores="popup">${copy.cta}</button></div></div></div>`;
+    popup.innerHTML = `<div class="bf-pop__backdrop" data-bf-close="backdrop"></div><div class="bf-pop__card" role="dialog" aria-modal="true" aria-labelledby="bf-pop-title" tabindex="-1" data-lenis-prevent><span class="bf-pop__handle" aria-hidden="true"></span><div class="${SITE_CLOSE_CLASS} bf-pop__close" role="button" tabindex="0" data-bf-close="button" aria-label="${copy.close}"><div class="${SITE_CLOSE_ICON_CLASS}" aria-hidden="true"><div></div><div></div></div></div><div class="bf-pop__scroll" data-lenis-prevent><div class="bf-pop__visual"><img src="${IMAGES.visual}" alt="" decoding="async"></div><div class="bf-pop__body"><p class="bf-pop__date">${copy.dates}</p><h2 class="bf-pop__title" id="bf-pop-title">${copy.name}</h2><p class="bf-pop__lead">${copy.lead}</p><ul class="bf-pop__gifts">${gifts}</ul><p class="bf-pop__note">${copy.note}</p><div class="bf-pop__actions"><button type="button" class="bf-pop__cta" data-bf-go="shop">${copy.cta}</button><button type="button" class="bf-pop__cta bf-pop__cta--ghost" data-bf-go="stores">${copy.ctaStores}</button></div></div></div></div>`;
     const texture = document.querySelector(SELECTORS.texture);
     const textureImage = texture ? window.getComputedStyle(texture).backgroundImage : 'none';
     if (textureImage && textureImage !== 'none') popup.style.setProperty('--bf-texture', textureImage);
@@ -235,7 +249,7 @@
     window.requestAnimationFrame(() => refs.popup.classList.add(OPEN_CLASS));
     lockScroll(true);
     refs.card.focus({ preventScroll: true });
-    track('popup_open', source);
+    track(source === AUTO_SOURCE ? 'popup_auto' : 'popup_open', source);
   };
 
   const close = (source, after) => {
@@ -254,14 +268,16 @@
     }, reducedMotion.matches ? DURATION.backdrop : DURATION.close);
   };
 
-  const goToStores = (source) => {
-    track('find_store', source);
-    const link = document.querySelector(SELECTORS.storesLink);
+  const goTo = (key) => {
+    const destination = DESTINATIONS[key];
+    if (!destination) return;
+    track(destination.action, POPUP_SOURCE);
+    const link = document.querySelector(destination.link);
     if (link) {
       link.click();
       return;
     }
-    const target = document.querySelector(SELECTORS.storeSection);
+    const target = document.querySelector(destination.section);
     if (!target) return;
     if (typeof window.SScroll !== 'undefined') window.SScroll.scrollTo(target);
     else target.scrollIntoView({ behavior: 'smooth' });
@@ -269,15 +285,15 @@
 
   const onClick = (event) => {
     const opener = event.target.closest('[data-bf-open]');
-    const stores = event.target.closest('[data-bf-stores]');
+    const jump = event.target.closest('[data-bf-go]');
     const closer = event.target.closest('[data-bf-close]');
-    if (!opener && !stores && !closer) return;
+    if (!opener && !jump && !closer) return;
     event.preventDefault();
     event.stopPropagation();
     if (opener) open(opener.getAttribute('data-bf-open'));
     else if (closer) close(closer.getAttribute('data-bf-close'));
-    else if (state.open) close('find_store', () => goToStores(stores.getAttribute('data-bf-stores')));
-    else goToStores(stores.getAttribute('data-bf-stores'));
+    else if (state.open) close(jump.getAttribute('data-bf-go'), () => goTo(jump.getAttribute('data-bf-go')));
+    else goTo(jump.getAttribute('data-bf-go'));
   };
 
   const onKeydown = (event) => {
@@ -350,7 +366,7 @@
       window.setTimeout(tryAutoOpen, BUSY_RETRY_DELAY);
       return;
     }
-    open('auto');
+    open(AUTO_SOURCE);
   };
 
   const preloadImages = () => {

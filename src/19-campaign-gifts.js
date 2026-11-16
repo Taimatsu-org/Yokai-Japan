@@ -4,8 +4,9 @@
 
   const STOREFRONT = { endpoint: 'https://yokai-sake.myshopify.com/api/2025-01/graphql.json', token: '1432a4269f2a938b1e58ab4c6b49138a' };
   const CART_KEY = 'yokai_cart_id';
-  const CHOICE_KEY = 'yokai_bf2026_gifts';
+  const STORE_KEY = 'yokai_bf2026_gifts';
   const GIFT_ATTRIBUTE = '_yokai_gift';
+  const SHIPPING_KEY = 'shipping';
   const PAID_SKU_PATTERN = /^PF\d+/;
   const TITLE_PREFIX_PATTERN = /^YOKAI Perfume\s*-\s*/i;
   const LINE_ID_PATTERN = /Cart\.remove\('([^']+)'\)/;
@@ -19,18 +20,34 @@
   const HOST_POLL_LIMIT = 80;
   const HOST_RENDER_TIMEOUT = 5000;
   const THUMB_WIDTH = 160;
+  const CLOSE_CLEARANCE = 72;
   const MOBILE_QUERY = '(max-width: 767px)';
+  const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
+  const Z_INDEX = { popup: 10010 };
+  const DURATION = { backdrop: 600, card: 700, close: 420 };
   const NODE_CLASS = 'bfg-node';
   const LINE_CLASS = 'bfg-line';
+  const OFF_CLASS = 'bfg-off';
   const DONE_CLASS = 'is-done';
   const BUSY_CLASS = 'is-busy';
   const CURRENT_CLASS = 'is-current';
-  const PICKING_CLASS = 'is-picking';
+  const VISIBLE_CLASS = 'is-visible';
+  const OPEN_CLASS = 'is-open';
+  const SITE_CLOSE_CLASS = 'close-svg';
+  const SITE_CLOSE_ICON_CLASS = 'close-x';
+  const ACTIVATE_KEYS = ['Enter', ' '];
+  const MODES = { unlock: 'unlock', choose: 'choose' };
+  const SEPARATOR_HTML = '<span class="bfg-progress__sep" aria-hidden="true"> · </span>';
   const LOG_LABEL = '[yokai-gifts]';
   const EASE_OUT = 'cubic-bezier(0.16, 1, 0.3, 1)';
-  const COLORS = { terra: '#A5512F', ink: '#1F1D21', cream: '#F5EFE1', track: 'rgba(31, 29, 33, 0.15)', hover: 'rgba(31, 29, 33, 0.35)', wash: 'rgba(31, 29, 33, 0.05)' };
+  const EASE_IN = 'cubic-bezier(0.7, 0, 0.84, 0)';
+  const COLORS = { terra: '#A5512F', ink: '#1F1D21', cream: '#F5EFE1', track: 'rgba(31, 29, 33, 0.15)', hover: 'rgba(31, 29, 33, 0.35)', wash: 'rgba(31, 29, 33, 0.05)', backdrop: 'rgba(20, 16, 18, 0.5)' };
   const FONTS = { title: "Optima, 'Palatino Linotype', sans-serif", text: 'ibm-plex-sans-jp, sans-serif' };
-  const SOLID_IMAGE = 'https://cdn.prod.website-files.com/694de20134d7a4afc6818bdd/6af16afa84e7ff9e17c2e41b_yokai-bf2026-gift-solid-alpha.webp';
+  const GIFT_IMAGES = {
+    solid: 'https://cdn.prod.website-files.com/694de20134d7a4afc6818bdd/6af16afa84e7ff9e17c2e41b_yokai-bf2026-gift-solid-alpha.webp',
+    small: 'https://cdn.prod.website-files.com/694de20134d7a4afc6818bdd/6af16afa434edee758053e8e_yokai-bf2026-gift-9ml-alpha.webp',
+    large: 'https://cdn.prod.website-files.com/694de20134d7a4afc6818bdd/6af16afa84e7ff9e17c2e3fe_yokai-bf2026-gift-30ml-alpha.webp'
+  };
 
   const TIERS = [
     { key: 'solid', buy: 2, sku: 'SP001', choice: false },
@@ -40,8 +57,6 @@
 
   const SELECTORS = {
     shipping: '.shipping-progress',
-    shippingMessage: '[data-shipping-msg]',
-    shippingBar: '[data-shipping-bar]',
     shippingGoal: '[data-shipping-goal]',
     list: '[data-cart-lines]',
     total: '[data-cart-total]',
@@ -51,39 +66,62 @@
     lineSku: '.cart-line-variant span:last-child',
     linePrice: '.cart-line-price',
     lineControls: '.cart-line-qty',
-    product: '[data-shopify-handle]'
+    product: '[data-shopify-handle]',
+    texture: '.news--lightbox-content',
+    focusable: 'button, [href], [tabindex]:not([tabindex="-1"])',
+    action: '[data-bfg-choose], [data-bfg-open], [data-bfg-close]'
   };
 
   const COPY = {
     en: {
       heading: 'BLACK FRIDAY GIFTS',
+      eyebrow: 'BLACK FRIDAY GIFT',
       start: 'Buy 2 perfumes for a free solid perfume',
       more: (count, gift) => `${count} more ${count === 1 ? 'perfume' : 'perfumes'} for a free ${gift}`,
       complete: 'You have all three Black Friday gifts',
+      completeAll: 'You have free shipping and all three gifts',
       step: (buy) => `Buy ${buy}`,
+      rail: { shipping: ['Free', 'shipping'], solid: ['Solid', 'perfume'], small: ['9 mL', 'perfume'], large: ['30 mL', 'perfume'] },
       names: { solid: 'Solid perfume', small: '9 mL perfume', large: '30 mL perfume' },
       inline: { solid: 'solid perfume', small: '9 mL perfume', large: '30 mL perfume' },
       choose: { small: 'Choose your free 9 mL perfume', large: 'Choose your free 30 mL perfume' },
+      unlocked: { solid: "You've unlocked a free solid perfume", small: "You've unlocked a free 9 mL perfume", large: "You've unlocked a free 30 mL perfume" },
+      added: "We've added it to your cart.",
+      pickLead: 'Choose your scent. You can change it in the cart.',
+      pending: 'Choose your scent',
       gift: 'GIFT',
       free: 'Free',
+      pick: 'CHOOSE',
       change: 'CHANGE',
-      cancel: 'CLOSE',
+      later: 'Choose later',
+      proceed: 'Continue',
+      close: 'Close',
       previewNote: 'Preview: gifts are still charged at checkout until the Shopify discounts are set up.',
       solidNote: 'Preview: not in the online store yet.'
     },
     ja: {
       heading: 'BLACK FRIDAY ギフト',
+      eyebrow: 'BLACK FRIDAY ギフト',
       start: '香水2本で、練り香水をプレゼント',
       more: (count, gift) => `あと${count}本で、${gift}をプレゼント`,
       complete: '3つのギフトすべてをお贈りします',
-      step: (buy) => `${buy}本ご購入で`,
+      completeAll: '送料無料・3つのギフトすべてをお贈りします',
+      step: (buy) => `${buy}本で`,
+      rail: { shipping: ['送料無料'], solid: ['練り香水'], small: ['香水 9mL'], large: ['香水 30mL'] },
       names: { solid: '練り香水', small: '香水 9mL', large: '香水 30mL' },
       inline: { solid: '練り香水', small: '香水 9mL', large: '香水 30mL' },
-      choose: { small: 'ギフトの香水 9mL をお選びください', large: 'ギフトの香水 30mL をお選びください' },
+      choose: { small: 'ギフトの香水 9mL を選ぶ', large: 'ギフトの香水 30mL を選ぶ' },
+      unlocked: { solid: '練り香水をプレゼントいたします', small: '香水 9mL をプレゼントいたします', large: '香水 30mL をプレゼントいたします' },
+      added: 'カートに追加しました。',
+      pickLead: 'お好きな香りをお選びください。カート内で変更できます。',
+      pending: '香りをお選びください',
       gift: 'ギフト',
       free: '無料',
+      pick: '選ぶ',
       change: '変更',
-      cancel: '閉じる',
+      later: 'あとで選ぶ',
+      proceed: 'お買い物を続ける',
+      close: '閉じる',
       previewNote: 'プレビュー：Shopifyの割引設定が完了するまで、ギフトはチェックアウトで課金されます。',
       solidNote: 'プレビュー：オンラインストアには未登録です。'
     }
@@ -100,47 +138,80 @@
   };
 
   const copy = COPY[JA_PATH_PATTERN.test(window.location.pathname) ? 'ja' : 'en'];
-  const state = { ready: false, busy: false, lines: [], gifts: {}, solid: null, failed: new Set(), picking: {}, loading: '', hostTotal: 0, expect: { present: [], absent: [] }, waiters: [] };
+  const reducedMotion = window.matchMedia(REDUCED_MOTION_QUERY);
+  const state = { ready: false, busy: false, lines: [], gifts: {}, solid: null, failed: new Set(), loading: '', hostTotal: 0, lastPaid: null, queue: [], popup: null, returnFocus: null, scrollLocked: false, resumeScroll: false, messageHtml: '', expect: { present: [], absent: [] }, waiters: [] };
   const refs = {};
 
   const css = `
-    .bfg-progress{position:relative;z-index:2;margin-top:1rem}
+    .shipping-progress.${OFF_CLASS}{position:absolute;visibility:hidden;pointer-events:none}
+    .bfg-progress{position:relative;z-index:2}
     .bfg-progress::after{content:'';position:absolute;top:100%;left:0;width:100%;height:1.5rem;background:${COLORS.cream};z-index:1;pointer-events:none}
     .bfg-progress__msg{margin:0;font-size:14px;line-height:20px}
-    .bfg-steps{list-style:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:.5rem 0 0;padding:0}
-    .bfg-step{min-width:0;margin:0;padding:0}
+    .bfg-progress__sep{opacity:.45}
+    .bfg-progress__link{all:unset;cursor:pointer;color:${COLORS.terra};border-bottom:1px solid currentColor}
+    .bfg-progress__link:focus-visible{outline:1px solid ${COLORS.ink};outline-offset:3px}
+    .bfg-steps{list-style:none;display:flex;gap:8px;margin:.5rem 0 0;padding:0}
+    .bfg-step{flex:1 1 0;min-width:0;margin:0;padding:0}
     .bfg-step__track{display:block;height:3px;background:${COLORS.track}}
     .bfg-step__bar{display:block;width:0;height:3px;background:${COLORS.ink};transition:width .7s ${EASE_OUT}}
     .bfg-step__text{display:block;margin-top:7px;font-size:12px;line-height:1.35;opacity:.55;transition:opacity .4s}
     .bfg-step.${DONE_CLASS} .bfg-step__text{opacity:1}
-    .bfg-step__buy{display:block;font-size:10.5px;letter-spacing:.12em;color:${COLORS.terra}}
+    .bfg-step__when{display:block;font-size:10.5px;letter-spacing:.12em;color:${COLORS.terra}}
     .bfg-heading{margin:0;padding:1.5rem 0 .25rem;font:400 11px/1 ${FONTS.text};letter-spacing:.24em;color:${COLORS.terra}}
     [data-cart-lines] .cart-line.${LINE_CLASS}{padding:1.25rem 0}
-    [data-cart-lines] .cart-line.${LINE_CLASS}.${PICKING_CLASS}{padding-bottom:.75rem;border-bottom:0}
     .${LINE_CLASS} .cart-line-img{width:88px;height:auto;min-height:112px}
     .${LINE_CLASS} .cart-line-info{justify-content:flex-start}
     .${LINE_CLASS} .cart-line-qty{margin:.75rem 0 0}
-    .${LINE_CLASS} .bfg-solid-img{object-fit:contain;padding:18px;box-sizing:border-box;background:${COLORS.wash}}
+    .${LINE_CLASS} .cart-line-price{white-space:nowrap;padding-left:.75rem}
+    .${LINE_CLASS} .bfg-gift-img{object-fit:contain;padding:14px;box-sizing:border-box;background:${COLORS.wash}}
+    .${LINE_CLASS}.${BUSY_CLASS}{opacity:.45;pointer-events:none}
     .bfg-was{margin-right:.6em;opacity:.5}
     .bfg-free{color:${COLORS.terra}}
     .bfg-tag{font:400 11px/1 ${FONTS.text};letter-spacing:.2em;color:${COLORS.terra}}
-    [data-cart-lines] .cart-line.bfg-pick{display:block}
-    .bfg-pick--change{padding:0 0 1.25rem;border-bottom:1px solid ${COLORS.track}}
-    .bfg-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 16px;margin-top:1rem}
-    .bfg-pick--change .bfg-options{margin-top:0}
+    .bfg-note{margin:0;padding:1rem 0 0;font-size:11px;line-height:1.6;opacity:.6}
+    .bfg-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px 12px;margin:0 0 22px}
     .bfg-option{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:12px;min-width:0;padding:6px;border:1px solid transparent;cursor:pointer;transition:border-color .3s}
     .bfg-option:hover,.bfg-option.${CURRENT_CLASS}{border-color:${COLORS.hover}}
     .bfg-option:focus-visible{outline:1px solid ${COLORS.ink};outline-offset:2px}
     .bfg-option img{flex:none;width:48px;height:60px;object-fit:cover}
     .bfg-option span{min-width:0;font:400 14px/1.3 ${FONTS.title}}
-    .bfg-pick.${BUSY_CLASS}{opacity:.45;pointer-events:none}
-    .bfg-note{margin:0;padding:1rem 0 0;font-size:11px;line-height:1.6;opacity:.6}
+    .bfg-pop{position:fixed;inset:0;z-index:${Z_INDEX.popup};display:flex;align-items:center;justify-content:center;visibility:hidden;pointer-events:none}
+    .bfg-pop.${VISIBLE_CLASS}{visibility:visible}
+    .bfg-pop.${OPEN_CLASS}{pointer-events:auto}
+    .bfg-pop__backdrop{position:absolute;inset:0;background:${COLORS.backdrop};opacity:0;touch-action:none;transition:opacity ${DURATION.backdrop}ms ${EASE_OUT}}
+    .bfg-pop.${OPEN_CLASS} .bfg-pop__backdrop{opacity:1}
+    .bfg-pop__card{position:relative;display:flex;width:min(580px,calc(100vw - 48px));max-height:calc(100vh - 64px);max-height:calc(100dvh - 64px);background:${COLORS.cream} var(--bfg-texture,none) center/cover;color:${COLORS.ink};opacity:0;transform:translateY(24px);transition:opacity ${DURATION.card}ms ${EASE_OUT},transform ${DURATION.card}ms ${EASE_OUT};outline:none}
+    .bfg-pop.${OPEN_CLASS} .bfg-pop__card{opacity:1;transform:none}
+    .bfg-pop:not(.${OPEN_CLASS}) .bfg-pop__card,.bfg-pop:not(.${OPEN_CLASS}) .bfg-pop__backdrop{transition-duration:${DURATION.close}ms;transition-timing-function:${EASE_IN}}
+    .bfg-pop__scroll{box-sizing:border-box;width:100%;padding:44px 40px 36px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+    .bfg-pop__eyebrow{margin:0 0 12px;padding-right:${CLOSE_CLEARANCE}px;font:400 11px/1 ${FONTS.text};letter-spacing:.24em;color:${COLORS.terra}}
+    .bfg-pop__title{margin:0 0 14px;padding-right:${CLOSE_CLEARANCE}px;font:400 26px/1.2 ${FONTS.title};letter-spacing:.02em;color:${COLORS.ink}}
+    .bfg-pop__lead{margin:0 0 20px;font:400 13px/1.8 ${FONTS.text};letter-spacing:.04em}
+    .bfg-pop__gift{display:flex;align-items:center;gap:20px;margin:0 0 26px}
+    .bfg-pop__gift img{flex:none;width:88px;height:88px;object-fit:contain}
+    .bfg-pop__gift .bfg-pop__lead{margin:0}
+    .bfg-pop__actions{display:flex;align-items:center;gap:24px}
+    .bfg-pop__cta{all:unset;box-sizing:border-box;padding:16px 32px;background:${COLORS.ink};color:${COLORS.cream};font:400 12px/1 ${FONTS.text};letter-spacing:.16em;text-align:center;cursor:pointer;transition:opacity .3s}
+    .bfg-pop__cta:hover{opacity:.85}
+    .bfg-pop__later{all:unset;padding-bottom:3px;border-bottom:1px solid currentColor;font:400 12px/1 ${FONTS.text};letter-spacing:.12em;opacity:.7;cursor:pointer}
+    .bfg-pop__cta:focus-visible,.bfg-pop__later:focus-visible{outline:1px solid ${COLORS.ink};outline-offset:3px}
+    .bfg-pop__close:focus-visible{outline:1px solid ${COLORS.ink};outline-offset:-8px}
     @media ${MOBILE_QUERY}{
-      .bfg-options{gap:4px 8px}
+      .bfg-step__text{font-size:11px}
+      .bfg-step__when{font-size:10px;letter-spacing:.06em}
+      .bfg-step__wrap{display:block}
+      .bfg-options{grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 8px}
       .bfg-option{gap:8px;padding:4px}
       .bfg-option img{width:40px;height:50px}
       .bfg-option span{font-size:13px}
+      .bfg-pop{align-items:flex-end}
+      .bfg-pop__card{width:100%;max-height:88vh;max-height:88dvh;opacity:1;transform:translateY(100%)}
+      .bfg-pop__scroll{padding:30px 20px calc(24px + env(safe-area-inset-bottom))}
+      .bfg-pop__title{font-size:22px}
+      .bfg-pop__gift img{width:72px;height:72px}
+      .bfg-pop__cta{flex:1}
     }
+    @media ${REDUCED_MOTION_QUERY}{.bfg-pop__card{transform:none!important;transition:opacity ${DURATION.backdrop}ms linear!important}}
   `;
 
   const yen = (value) => `¥${Math.round(Number(value)).toLocaleString('en-US')}`;
@@ -166,20 +237,32 @@
 
   const cartId = () => window.localStorage.getItem(CART_KEY);
 
-  const readChoices = () => {
+  const readStore = () => {
+    const fresh = { cart: cartId() || '', choices: {}, seen: [] };
     try {
-      return JSON.parse(window.localStorage.getItem(CHOICE_KEY)) || {};
+      const saved = JSON.parse(window.localStorage.getItem(STORE_KEY));
+      return saved && saved.cart === fresh.cart ? { ...fresh, ...saved } : fresh;
     } catch (error) {
-      return {};
+      return fresh;
     }
   };
 
-  const writeChoice = (key, variantId) => {
-    const choices = readChoices();
+  const writeStore = (patch) => {
+    window.localStorage.setItem(STORE_KEY, JSON.stringify({ ...readStore(), ...patch }));
+  };
+
+  const setChoice = (key, variantId) => {
+    const choices = { ...readStore().choices };
     if (variantId) choices[key] = variantId;
     else delete choices[key];
-    window.localStorage.setItem(CHOICE_KEY, JSON.stringify(choices));
+    writeStore({ choices });
   };
+
+  const markSeen = (key) => {
+    writeStore({ seen: [...new Set([...readStore().seen, key])] });
+  };
+
+  const tierOf = (key) => TIERS.find((tier) => tier.key === key);
 
   const giftAttributes = (key) => [{ key: GIFT_ATTRIBUTE, value: key }];
 
@@ -221,8 +304,12 @@
 
   const giftLines = (key) => state.lines.filter((line) => state.gifts[line.id] === key);
 
+  const giftValue = () => state.lines.filter((line) => state.gifts[line.id]).reduce((sum, line) => sum + line.price * line.quantity, 0);
+
+  const subtotal = () => (state.lines.length ? Math.max(0, state.hostTotal - (PREVIEW_ASSUMES_FREE ? giftValue() : 0)) : 0);
+
   const options = (tier) => {
-    if (typeof window.getProduct !== 'function') return [];
+    if (!tier.choice || typeof window.getProduct !== 'function') return [];
     const handles = [...new Set([...document.querySelectorAll(SELECTORS.product)].map((node) => node.dataset.shopifyHandle).filter(Boolean))];
     return handles.map((handle) => {
       const product = window.getProduct(handle);
@@ -232,9 +319,11 @@
     }).filter(Boolean);
   };
 
+  const offered = (tier) => (tier.choice ? options(tier).length > 0 : Boolean(state.solid) || PREVIEW_ASSUMES_FREE);
+
   const wanted = (tier) => {
     if (!tier.choice) return state.solid ? { variantId: state.solid.variantId, sku: tier.sku } : null;
-    const choice = readChoices()[tier.key];
+    const choice = readStore().choices[tier.key];
     return options(tier).find((option) => option.variantId === choice) || null;
   };
 
@@ -285,7 +374,7 @@
       if (gifts.some((gift) => gift.key === action.tier.key && gift.variantId === action.variantId)) return;
       if (action.tier.choice) {
         state.failed.add(action.variantId);
-        writeChoice(action.tier.key, '');
+        setChoice(action.tier.key, '');
       } else {
         state.solid = false;
       }
@@ -307,46 +396,71 @@
     window.Cart.init();
   });
 
+  const shippingState = () => {
+    const goalNode = document.querySelector(SELECTORS.shippingGoal);
+    const goal = parseYen(goalNode && goalNode.textContent);
+    const i18n = window.YokaiI18n;
+    if (!goal || !i18n) return null;
+    const remain = Math.max(0, goal - subtotal());
+    return { goal, ratio: Math.min(1, subtotal() / goal), done: remain === 0, message: remain ? i18n.freeShipRemain(remain) : i18n.freeShipDone };
+  };
+
+  const openChoice = (paid) => TIERS.find((tier) => tier.choice && paid >= tier.buy && !giftLines(tier.key).length && offered(tier));
+
+  const nextMessage = (paid) => {
+    const next = TIERS.find((tier) => paid < tier.buy);
+    if (!next) return '';
+    return paid ? copy.more(next.buy - paid, copy.inline[next.key]) : copy.start;
+  };
+
+  const messageParts = (paid, shipping) => {
+    const parts = [];
+    if (shipping && !shipping.done && state.lines.length) parts.push(escapeHtml(shipping.message));
+    const open = openChoice(paid);
+    if (open) parts.push(`<button type="button" class="bfg-progress__link" data-bfg-open="${open.key}">${copy.choose[open.key]}</button>`);
+    else parts.push(nextMessage(paid) || (shipping && shipping.done ? copy.completeAll : copy.complete));
+    return parts;
+  };
+
+  const paintProgress = (paid) => {
+    const shipping = shippingState();
+    const first = refs.steps[SHIPPING_KEY];
+    first.node.hidden = !shipping;
+    if (shipping) {
+      first.bar.style.width = `${shipping.ratio * 100}%`;
+      first.node.classList.toggle(DONE_CLASS, shipping.done);
+      first.when.textContent = yen(shipping.goal);
+    }
+    TIERS.forEach((tier, index) => {
+      const floor = index ? TIERS[index - 1].buy : 0;
+      const ratio = Math.max(0, Math.min(1, (paid - floor) / (tier.buy - floor)));
+      refs.steps[tier.key].bar.style.width = `${ratio * 100}%`;
+      refs.steps[tier.key].node.classList.toggle(DONE_CLASS, paid >= tier.buy);
+    });
+    const html = messageParts(paid, shipping).join(SEPARATOR_HTML);
+    if (state.messageHtml === html) return;
+    state.messageHtml = html;
+    refs.message.innerHTML = html;
+  };
+
   const decorate = (line, tier) => {
     const node = line.el;
     node.innerHTML = line.html;
     node.className = `${line.className} ${LINE_CLASS}`;
-    const picking = tier.choice && state.picking[tier.key];
-    if (picking) node.classList.add(PICKING_CLASS);
     const price = node.querySelector(SELECTORS.linePrice);
     if (price) price.innerHTML = `<s class="bfg-was">${yen(line.price)}</s><span class="bfg-free">${copy.free}</span>`;
     const controls = node.querySelector(SELECTORS.lineControls);
-    if (controls) controls.innerHTML = `<span class="bfg-tag">${copy.gift}</span>${tier.choice ? `<button type="button" class="cart-line-remove" data-bfg-change="${tier.key}" aria-expanded="${picking ? 'true' : 'false'}">${picking ? copy.cancel : copy.change}</button>` : ''}`;
-    return node;
-  };
-
-  const picker = (tier, line) => {
-    const items = options(tier);
-    if (!items.length) return null;
-    const node = element('div', `${NODE_CLASS} bfg-pick ${line ? 'bfg-pick--change' : `cart-line ${LINE_CLASS}`}`);
-    const head = line ? '' : `<div class="cart-line-title-and-price"><p class="cart-line-title">${copy.choose[tier.key]}</p><p class="cart-line-price"><span class="bfg-free">${copy.free}</span></p></div>`;
-    const buttons = items.map((item) => {
-      const current = Boolean(line) && line.sku === item.sku;
-      return `<button type="button" class="bfg-option${current ? ` ${CURRENT_CLASS}` : ''}" data-bfg-choose="${tier.key}" data-variant-id="${escapeHtml(item.variantId)}" aria-pressed="${current ? 'true' : 'false'}"><img src="${escapeHtml(thumb(item.image))}" alt="" loading="lazy" decoding="async"><span>${escapeHtml(item.name)}</span></button>`;
-    }).join('');
-    node.innerHTML = `${head}<div class="bfg-options" role="group" aria-label="${copy.choose[tier.key]}">${buttons}</div>`;
+    if (controls) controls.innerHTML = `<span class="bfg-tag">${copy.gift}</span>${tier.choice ? `<button type="button" class="cart-line-remove" data-bfg-open="${tier.key}">${copy.change}</button>` : ''}`;
     if (state.loading === tier.key) node.classList.add(BUSY_CLASS);
     return node;
   };
 
-  const virtualSolid = () => element('div', `${NODE_CLASS} cart-line ${LINE_CLASS}`, `<img class="cart-line-img bfg-solid-img" src="${SOLID_IMAGE}" alt=""><div class="cart-line-info"><div class="cart-line-info-wrapper"><div class="cart-line-title-and-price"><p class="cart-line-title">${copy.names.solid}</p><p class="cart-line-price"><span class="bfg-free">${copy.free}</span></p></div><p class="cart-line-purfume-style">${copy.solidNote}</p></div><div class="cart-line-qty"><span class="bfg-tag">${copy.gift}</span></div></div>`);
-
-  const paintProgress = (paid) => {
-    const next = TIERS.find((tier) => paid < tier.buy);
-    if (!next) refs.message.textContent = copy.complete;
-    else if (!paid) refs.message.textContent = copy.start;
-    else refs.message.textContent = copy.more(next.buy - paid, copy.inline[next.key]);
-    TIERS.forEach((tier, index) => {
-      const floor = index ? TIERS[index - 1].buy : 0;
-      const ratio = Math.max(0, Math.min(1, (paid - floor) / (tier.buy - floor)));
-      refs.steps[index].bar.style.width = `${ratio * 100}%`;
-      refs.steps[index].node.classList.toggle(DONE_CLASS, paid >= tier.buy);
-    });
+  const placeholder = (tier) => {
+    const detail = tier.choice ? copy.pending : copy.solidNote;
+    const action = tier.choice ? `<button type="button" class="cart-line-remove" data-bfg-open="${tier.key}">${copy.pick}</button>` : '';
+    const node = element('div', `${NODE_CLASS} cart-line ${LINE_CLASS}`, `<img class="cart-line-img bfg-gift-img" src="${GIFT_IMAGES[tier.key]}" alt=""><div class="cart-line-info"><div class="cart-line-info-wrapper"><div class="cart-line-title-and-price"><p class="cart-line-title">${copy.names[tier.key]}</p><p class="cart-line-price"><span class="bfg-free">${copy.free}</span></p></div><p class="cart-line-purfume-style">${detail}</p></div><div class="cart-line-qty"><span class="bfg-tag">${copy.gift}</span>${action}</div></div>`);
+    if (state.loading === tier.key) node.classList.add(BUSY_CLASS);
+    return node;
   };
 
   const paintLines = (paid) => {
@@ -355,47 +469,104 @@
     const nodes = [];
     TIERS.filter((tier) => paid >= tier.buy).forEach((tier) => {
       const line = giftLines(tier.key)[0];
-      if (line) {
-        nodes.push(decorate(line, tier));
-        if (tier.choice && state.picking[tier.key]) nodes.push(picker(tier, line));
-      } else if (tier.choice) {
-        nodes.push(picker(tier, null));
-      } else if (PREVIEW_ASSUMES_FREE && state.solid === false) {
-        nodes.push(virtualSolid());
-      }
+      if (line) nodes.push(decorate(line, tier));
+      else if (tier.choice ? offered(tier) : PREVIEW_ASSUMES_FREE && state.solid === false) nodes.push(placeholder(tier));
     });
-    const visible = nodes.filter(Boolean);
-    if (!visible.length) return;
+    if (!nodes.length) return;
     refs.list.appendChild(element('p', `${NODE_CLASS} bfg-heading`, copy.heading));
-    visible.forEach((node) => refs.list.appendChild(node));
+    nodes.forEach((node) => refs.list.appendChild(node));
     if (PREVIEW_ASSUMES_FREE) refs.list.appendChild(element('p', `${NODE_CLASS} bfg-note`, copy.previewNote));
   };
 
-  const paintTotals = () => {
-    if (!PREVIEW_ASSUMES_FREE) return;
-    const value = state.lines.filter((line) => state.gifts[line.id]).reduce((sum, line) => sum + line.price * line.quantity, 0);
-    if (!value) return;
-    const subtotal = Math.max(0, state.hostTotal - value);
+  const paintTotal = () => {
+    if (!PREVIEW_ASSUMES_FREE || !giftValue()) return;
     const total = document.querySelector(SELECTORS.total);
-    if (total) total.textContent = yen(subtotal);
-    const goalNode = document.querySelector(SELECTORS.shippingGoal);
-    const goal = parseYen(goalNode && goalNode.textContent);
-    const i18n = window.YokaiI18n;
-    if (!goal || !i18n) return;
-    const bar = document.querySelector(SELECTORS.shippingBar);
-    const message = document.querySelector(SELECTORS.shippingMessage);
-    if (bar) bar.style.width = `${Math.min(100, (subtotal / goal) * 100)}%`;
-    if (message) message.textContent = subtotal < goal ? i18n.freeShipRemain(goal - subtotal) : i18n.freeShipDone;
+    if (total) total.textContent = yen(subtotal());
+  };
+
+  const observe = () => {
+    refs.observer.observe(refs.list, { childList: true });
+    if (refs.goal) refs.observer.observe(refs.goal, { childList: true, characterData: true, subtree: true });
   };
 
   const paint = () => {
     if (!state.ready) return;
     const paid = paidCount();
     refs.observer.disconnect();
-    paintProgress(paid);
     paintLines(paid);
-    paintTotals();
-    refs.observer.observe(refs.list, { childList: true });
+    paintTotal();
+    paintProgress(paid);
+    observe();
+  };
+
+  const lockScroll = (locked) => {
+    const scroller = window.SScroll;
+    if (!scroller) return;
+    if (locked === state.scrollLocked) return;
+    state.scrollLocked = locked;
+    if (locked) {
+      state.resumeScroll = !scroller.isStopped;
+      scroller.stop();
+    } else if (state.resumeScroll) {
+      scroller.start();
+    }
+  };
+
+  const popupBody = (tier, mode) => {
+    const title = mode === MODES.unlock ? copy.unlocked[tier.key] : copy.choose[tier.key];
+    const head = `<p class="bfg-pop__eyebrow">${copy.eyebrow}</p><h2 class="bfg-pop__title" id="bfg-pop-title">${title}</h2>`;
+    if (!tier.choice) {
+      const nudge = nextMessage(paidCount());
+      return `${head}<div class="bfg-pop__gift"><img src="${GIFT_IMAGES[tier.key]}" alt=""><p class="bfg-pop__lead">${copy.added}${nudge ? `<br>${nudge}` : ''}</p></div><div class="bfg-pop__actions"><button type="button" class="bfg-pop__cta" data-bfg-close="proceed">${copy.proceed}</button></div>`;
+    }
+    const line = giftLines(tier.key)[0];
+    const buttons = options(tier).map((item) => {
+      const current = Boolean(line) && line.sku === item.sku;
+      return `<button type="button" class="bfg-option${current ? ` ${CURRENT_CLASS}` : ''}" data-bfg-choose="${tier.key}" data-variant-id="${escapeHtml(item.variantId)}" aria-pressed="${current ? 'true' : 'false'}"><img src="${escapeHtml(thumb(item.image))}" alt="" decoding="async"><span>${escapeHtml(item.name)}</span></button>`;
+    }).join('');
+    return `${head}<p class="bfg-pop__lead">${copy.pickLead}</p><div class="bfg-options" role="group" aria-label="${copy.choose[tier.key]}">${buttons}</div><div class="bfg-pop__actions"><button type="button" class="bfg-pop__later" data-bfg-close="later">${line ? copy.close : copy.later}</button></div>`;
+  };
+
+  const openPopup = (tier, mode) => {
+    if (state.popup || !offered(tier)) return false;
+    state.popup = tier.key;
+    state.returnFocus = document.activeElement;
+    refs.popupBody.innerHTML = popupBody(tier, mode);
+    refs.popupBody.scrollTop = 0;
+    refs.popup.classList.add(VISIBLE_CLASS);
+    refs.popup.setAttribute('aria-hidden', 'false');
+    refs.popupCard.getBoundingClientRect();
+    window.requestAnimationFrame(() => refs.popup.classList.add(OPEN_CLASS));
+    lockScroll(true);
+    refs.popupCard.focus({ preventScroll: true });
+    return true;
+  };
+
+  const openNext = () => {
+    while (!state.popup && state.queue.length) {
+      const tier = tierOf(state.queue.shift());
+      if (paidCount() >= tier.buy && openPopup(tier, MODES.unlock)) markSeen(tier.key);
+    }
+  };
+
+  const closePopup = () => {
+    if (!state.popup) return;
+    state.popup = null;
+    refs.popup.classList.remove(OPEN_CLASS);
+    refs.popup.setAttribute('aria-hidden', 'true');
+    window.setTimeout(() => {
+      if (state.popup) return;
+      refs.popup.classList.remove(VISIBLE_CLASS);
+      lockScroll(false);
+      if (state.returnFocus && state.returnFocus.isConnected && state.returnFocus.focus) state.returnFocus.focus({ preventScroll: true });
+      openNext();
+    }, reducedMotion.matches ? DURATION.backdrop : DURATION.close);
+  };
+
+  const announce = (from, to) => {
+    const seen = readStore().seen;
+    TIERS.filter((tier) => from < tier.buy && to >= tier.buy && !seen.includes(tier.key)).forEach((tier) => state.queue.push(tier.key));
+    openNext();
   };
 
   const reconcile = async () => {
@@ -420,31 +591,60 @@
     }
   };
 
+  const choose = (key, variantId) => {
+    setChoice(key, variantId);
+    state.loading = key;
+    closePopup();
+    paint();
+    reconcile();
+  };
+
   const onHostRender = () => {
     state.lines = readLines();
     const total = document.querySelector(SELECTORS.total);
     state.hostTotal = parseYen(total && total.textContent);
+    const paid = paidCount();
     paint();
     if (settled()) state.waiters.splice(0).forEach((resolve) => resolve());
+    if (state.lastPaid !== null && paid > state.lastPaid) announce(state.lastPaid, paid);
+    state.lastPaid = paid;
     reconcile();
   };
 
-  const onListClick = (event) => {
-    const option = event.target.closest('[data-bfg-choose]');
-    const change = event.target.closest('[data-bfg-change]');
-    if (option) {
-      const key = option.getAttribute('data-bfg-choose');
-      writeChoice(key, option.getAttribute('data-variant-id'));
-      state.picking[key] = false;
-      state.loading = key;
-      paint();
-      reconcile();
+  const onClick = (event) => {
+    const target = event.target.closest(SELECTORS.action);
+    if (!target) return;
+    event.preventDefault();
+    if (target.hasAttribute('data-bfg-choose')) choose(target.getAttribute('data-bfg-choose'), target.getAttribute('data-variant-id'));
+    else if (target.hasAttribute('data-bfg-open')) openPopup(tierOf(target.getAttribute('data-bfg-open')), MODES.choose);
+    else closePopup();
+  };
+
+  const onKeydown = (event) => {
+    if (!state.popup) return;
+    if (event.key === 'Escape') {
+      event.stopPropagation();
+      closePopup();
       return;
     }
-    if (!change) return;
-    const key = change.getAttribute('data-bfg-change');
-    state.picking[key] = !state.picking[key];
-    paint();
+    const closer = event.target.closest && event.target.closest('[data-bfg-close]');
+    if (closer && closer.getAttribute('role') === 'button' && ACTIVATE_KEYS.includes(event.key)) {
+      event.preventDefault();
+      closePopup();
+      return;
+    }
+    if (event.key !== 'Tab') return;
+    const items = [...refs.popupCard.querySelectorAll(SELECTORS.focusable)];
+    if (!items.length) return;
+    const first = items[0];
+    const last = items[items.length - 1];
+    if (event.shiftKey && (document.activeElement === first || document.activeElement === refs.popupCard)) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
   };
 
   const onProductsReady = () => {
@@ -452,12 +652,37 @@
     reconcile();
   };
 
+  const railLabel = (key) => {
+    const [lead, rest] = copy.rail[key];
+    return rest ? `${lead} <span class="bfg-step__wrap">${rest}</span>` : lead;
+  };
+
   const buildProgress = () => {
-    const steps = TIERS.map((tier) => `<li class="bfg-step"><span class="bfg-step__track"><span class="bfg-step__bar"></span></span><span class="bfg-step__text"><span class="bfg-step__buy">${copy.step(tier.buy)}</span>${copy.names[tier.key]}</span></li>`).join('');
+    const keys = [SHIPPING_KEY, ...TIERS.map((tier) => tier.key)];
+    const steps = keys.map((key) => {
+      const tier = tierOf(key);
+      return `<li class="bfg-step" data-bfg-step="${key}"><span class="bfg-step__track"><span class="bfg-step__bar"></span></span><span class="bfg-step__text"><span class="bfg-step__when">${tier ? copy.step(tier.buy) : ''}</span>${railLabel(key)}</span></li>`;
+    }).join('');
     const node = element('div', 'bfg-progress', `<p class="bfg-progress__msg" aria-live="polite"></p><ol class="bfg-steps">${steps}</ol>`);
+    refs.shipping.classList.add(OFF_CLASS);
     refs.shipping.insertAdjacentElement('afterend', node);
     refs.message = node.querySelector('.bfg-progress__msg');
-    refs.steps = [...node.querySelectorAll('.bfg-step')].map((step) => ({ node: step, bar: step.querySelector('.bfg-step__bar') }));
+    refs.steps = {};
+    node.querySelectorAll('.bfg-step').forEach((step) => {
+      refs.steps[step.getAttribute('data-bfg-step')] = { node: step, bar: step.querySelector('.bfg-step__bar'), when: step.querySelector('.bfg-step__when') };
+    });
+  };
+
+  const buildPopup = () => {
+    const node = element('div', 'bfg-pop', `<div class="bfg-pop__backdrop" data-bfg-close="backdrop"></div><div class="bfg-pop__card" role="dialog" aria-modal="true" aria-labelledby="bfg-pop-title" tabindex="-1"><div class="${SITE_CLOSE_CLASS} bfg-pop__close" role="button" tabindex="0" data-bfg-close="button" aria-label="${copy.close}"><div class="${SITE_CLOSE_ICON_CLASS}" aria-hidden="true"><div></div><div></div></div></div><div class="bfg-pop__scroll" data-lenis-prevent></div></div>`);
+    node.setAttribute('aria-hidden', 'true');
+    const texture = document.querySelector(SELECTORS.texture);
+    const textureImage = texture ? window.getComputedStyle(texture).backgroundImage : 'none';
+    if (textureImage && textureImage !== 'none') node.style.setProperty('--bfg-texture', textureImage);
+    document.body.appendChild(node);
+    refs.popup = node;
+    refs.popupCard = node.querySelector('.bfg-pop__card');
+    refs.popupBody = node.querySelector('.bfg-pop__scroll');
   };
 
   const loadCart = () => {
@@ -477,11 +702,17 @@
   const start = async () => {
     refs.list = document.querySelector(SELECTORS.list);
     refs.shipping = document.querySelector(SELECTORS.shipping);
+    refs.goal = document.querySelector(SELECTORS.shippingGoal);
     if (!refs.list || !refs.shipping) return;
     document.head.appendChild(element('style', '', css));
     buildProgress();
+    buildPopup();
+    Object.values(GIFT_IMAGES).forEach((src) => {
+      new Image().src = src;
+    });
     refs.observer = new MutationObserver(onHostRender);
-    refs.list.addEventListener('click', onListClick);
+    document.addEventListener('click', onClick);
+    document.addEventListener('keydown', onKeydown, true);
     window.addEventListener('shopify-products-ready', onProductsReady);
     try {
       const [cart, solid] = await Promise.all([loadCart(), findSolid().catch(() => false)]);
