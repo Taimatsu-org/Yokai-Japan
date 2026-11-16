@@ -334,7 +334,7 @@
     if (!cart) return gifts;
     cart.lines.edges.forEach(({ node }) => {
       const attribute = node.attributes.find((item) => item.key === GIFT_ATTRIBUTE);
-      if (attribute) gifts.push({ lineId: node.id, key: attribute.value, variantId: node.merchandise.id, charged: Number(node.cost.totalAmount.amount) > 0 });
+      if (attribute) gifts.push({ lineId: node.id, key: attribute.value, variantId: node.merchandise.id, sku: node.merchandise.sku || '', charged: Number(node.cost.totalAmount.amount) > 0 });
     });
     return gifts;
   };
@@ -345,7 +345,8 @@
     state.charged = [];
     snapshotGifts(cart).forEach((gift) => {
       state.gifts[gift.lineId] = gift.key;
-      if (gift.charged) state.charged.push(gift.key);
+      const tier = tierOf(gift.key);
+      if (gift.charged && tier && tier.skuPattern.test(gift.sku)) state.charged.push(gift.key);
     });
     state.signature = signatureOf(nodes);
     state.snapshotPaid = nodes.filter((node) => !state.gifts[node.id] && PAID_SKU_PATTERN.test(node.merchandise.sku || '')).reduce((sum, node) => sum + node.quantity, 0);
