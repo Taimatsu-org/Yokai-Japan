@@ -66,9 +66,9 @@
       barMore: '詳しく見る',
       lead: '期間中、オンラインストアと店舗で、香水のご購入本数に応じてギフトをお贈りします。',
       gifts: [
-        { buy: '2本ご購入で', name: '練り香水', mark: '※', image: 'solid', compact: true },
-        { buy: '3本ご購入で', name: '香水 9mL', image: 'small', compact: false },
-        { buy: '5本ご購入で', name: '香水 30mL', image: 'large', compact: false }
+        { buy: '香水2本ご購入で', name: '練り香水', mark: '※', image: 'solid', compact: true },
+        { buy: '香水3本ご購入で', name: '香水 9mL', image: 'small', compact: false },
+        { buy: '香水5本ご購入で', name: '香水 30mL', image: 'large', compact: false }
       ],
       note: 'サイズを問わず対象・ギフトは重ねてお受け取りいただけます。<br>オンラインストア・店舗共通・なくなり次第終了<br>※練り香水は在庫に限りがあるため、なくなり次第終了いたします。',
       cta: '香水を見る',
@@ -82,9 +82,9 @@
       barMore: 'See the gifts',
       lead: 'Buy perfume online or at our stores and receive a gift, depending on how many you buy.',
       gifts: [
-        { buy: 'Buy 2', name: 'Solid perfume', mark: '*', image: 'solid', compact: true },
-        { buy: 'Buy 3', name: '9 mL perfume', image: 'small', compact: false },
-        { buy: 'Buy 5', name: '30 mL perfume', image: 'large', compact: false }
+        { buy: 'Buy 2 perfumes', name: 'Free <span class="bf-pop__gift-item">solid perfume</span>', mark: '*', image: 'solid', compact: true },
+        { buy: 'Buy 3 perfumes', name: 'Free <span class="bf-pop__gift-item">9 mL perfume</span>', image: 'small', compact: false },
+        { buy: 'Buy 5 perfumes', name: 'Free <span class="bf-pop__gift-item">30 mL perfume</span>', image: 'large', compact: false }
       ],
       note: 'Any size counts. Gifts are cumulative.<br>Online and in store. While supplies last.<br>*Solid perfume stock is limited and ends when it runs out.',
       cta: 'Shop perfumes',
@@ -155,6 +155,7 @@
       .bf-pop__gifts{gap:8px;padding-top:16px;margin-bottom:16px}
       .bf-pop__gift-img{height:64px;margin-bottom:8px}
       .bf-pop__gift-name{font-size:13px}
+      .bf-pop__gift-item{display:block}
       .bf-pop__note{font-size:10.5px;margin-bottom:18px}
       .bf-pop__actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
       .bf-pop__cta{padding:16px 8px}

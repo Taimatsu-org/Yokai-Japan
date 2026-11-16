@@ -6,6 +6,7 @@
   const CART_KEY = 'yokai_cart_id';
   const STORE_KEY = 'yokai_bf2026_gifts';
   const GIFT_ATTRIBUTE = '_yokai_gift';
+  const OVERVIEW_KEY = 'overview';
   const PAID_SKU_PATTERN = /^PF\d+/;
   const TITLE_PREFIX_PATTERN = /^YOKAI Perfume\s*-\s*/i;
   const LINE_ID_PATTERN = /Cart\.remove\('([^']+)'\)/;
@@ -18,17 +19,19 @@
   const HOST_POLL_INTERVAL = 250;
   const HOST_POLL_LIMIT = 80;
   const HOST_RENDER_TIMEOUT = 5000;
-  const THUMB_WIDTH = 160;
+  const THUMB_WIDTH = 240;
   const CLOSE_CLEARANCE = 72;
   const POINT_SIZE = 22;
   const TRACK_HEIGHT = 3;
   const LABEL_WIDTH = 60;
   const ICON_SIZE = 12;
+  const MARK_SIZE = 16;
+  const LINE_IMAGE_HEIGHT = 160;
   const MOBILE_QUERY = '(max-width: 767px)';
   const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
   const Z_INDEX = { popup: 10010 };
   const CARD_WIDTH = { notice: 520, choice: 680 };
-  const TRACK_ACTIONS = { unlock: 'gift_unlock', choose: 'gift_choose' };
+  const TRACK_ACTIONS = { unlock: 'gift_unlock', choose: 'gift_choose', view: 'gift_view' };
   const DURATION = { backdrop: 600, card: 700, close: 420 };
   const NODE_CLASS = 'bfg-node';
   const LINE_CLASS = 'bfg-line';
@@ -36,6 +39,7 @@
   const DONE_CLASS = 'is-done';
   const BUSY_CLASS = 'is-busy';
   const CURRENT_CLASS = 'is-current';
+  const MUTED_CLASS = 'is-muted';
   const VISIBLE_CLASS = 'is-visible';
   const OPEN_CLASS = 'is-open';
   const CHOICE_CLASS = 'bfg-pop--choice';
@@ -43,6 +47,7 @@
   const SITE_CLOSE_ICON_CLASS = 'close-x';
   const ACTIVATE_KEYS = ['Enter', ' '];
   const MODES = { unlock: 'unlock', choose: 'choose' };
+  const SOURCES = { bar: 'bar', line: 'line' };
   const LOG_LABEL = '[yokai-gifts]';
   const EASE_OUT = 'cubic-bezier(0.16, 1, 0.3, 1)';
   const EASE_IN = 'cubic-bezier(0.7, 0, 0.84, 0)';
@@ -53,7 +58,6 @@
     small: 'https://cdn.prod.website-files.com/694de20134d7a4afc6818bdd/6af16afa434edee758053e8e_yokai-bf2026-gift-9ml-alpha.webp',
     large: 'https://cdn.prod.website-files.com/694de20134d7a4afc6818bdd/6af16afa84e7ff9e17c2e3fe_yokai-bf2026-gift-30ml-alpha.webp'
   };
-
   const GIFT_ICON = `<svg class="bfg-point__icon" viewBox="0 0 12 12" width="${ICON_SIZE}" height="${ICON_SIZE}" fill="none" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.6 5.4h8.8v5H1.6zM1 3.6h10v1.8H1zM6 3.6v6.8M6 3.6C5.4 1.9 3.5 1.6 3.3 2.6 3.1 3.5 4.6 3.7 6 3.6ZM6 3.6c.6-1.7 2.5-2 2.7-1 .2.9-1.3 1.1-2.7 1Z"/></svg>`;
 
   const TIERS = [
@@ -68,6 +72,7 @@
     list: '[data-cart-lines]',
     total: '[data-cart-total]',
     line: '.cart-line',
+    lineTitle: '.cart-line-title',
     lineRemove: '.cart-line-remove',
     lineQuantity: '.cart-line-qty-selector span',
     lineSku: '.cart-line-variant span:last-child',
@@ -75,8 +80,10 @@
     lineControls: '.cart-line-qty',
     product: '[data-shopify-handle]',
     texture: '.news--lightbox-content',
-    focusable: 'button, [href], [tabindex]:not([tabindex="-1"])',
-    action: '[data-bfg-choose], [data-bfg-open], [data-bfg-close]'
+    focusable: 'button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])',
+    action: '[data-bfg-pick], [data-bfg-choose], [data-bfg-open], [data-bfg-overview], [data-bfg-close]',
+    option: '.bfg-option',
+    confirm: '.bfg-pop__cta[data-bfg-choose]'
   };
 
   const COPY = {
@@ -90,14 +97,24 @@
       choose: { small: 'Choose your free 9 mL perfume', large: 'Choose your free 30 mL perfume' },
       unlocked: { solid: "You've unlocked a free solid perfume", small: "You've unlocked a free 9 mL perfume", large: "You've unlocked a free 30 mL perfume" },
       added: "We've added it to your cart.",
-      pickLead: 'Choose your scent.',
+      pickLead: 'Select a scent, then add it to your cart.',
+      pending: 'Choose your scent',
+      style: 'EAU DE PARFUM',
       gift: 'Gift',
       free: 'Free',
       pick: 'CHOOSE SCENT',
       change: 'CHANGE',
+      confirm: 'Add to cart',
+      update: 'Update gift',
       later: 'Choose later',
       proceed: 'Continue',
       close: 'Close',
+      overview: 'Black Friday gifts',
+      rule: (buy) => `Free when you buy ${buy} perfumes`,
+      remaining: (count) => `${count} more ${count === 1 ? 'perfume' : 'perfumes'}`,
+      inCart: 'In your cart',
+      terms: 'Any size counts. Gifts add up. One set of gifts per order, while supplies last.',
+      see: 'See the gifts',
       previewNote: 'Preview: gifts are still charged at checkout until the Shopify discounts are set up.',
       solidNote: 'Preview: not in the online store yet.'
     },
@@ -111,14 +128,24 @@
       choose: { small: 'ギフトの香水 9mL を選ぶ', large: 'ギフトの香水 30mL を選ぶ' },
       unlocked: { solid: '練り香水をプレゼント', small: '香水 9mL をプレゼント', large: '香水 30mL をプレゼント' },
       added: 'カートに追加しました。',
-      pickLead: 'お好きな香りをお選びください。',
+      pickLead: '香りを選んで、カートに追加してください。',
+      pending: '香りをお選びください',
+      style: 'EAU DE PARFUM',
       gift: 'ギフト',
       free: '無料',
       pick: '香りを選ぶ',
       change: '変更',
+      confirm: 'カートに追加',
+      update: 'ギフトを変更',
       later: 'あとで選ぶ',
       proceed: 'お買い物を続ける',
       close: '閉じる',
+      overview: 'ブラックフライデー ギフト',
+      rule: (buy) => `香水${buy}本のご購入でプレゼント`,
+      remaining: (count) => `あと${count}本`,
+      inCart: 'カートに追加済み',
+      terms: 'サイズを問わず対象・ギフトは重ねてお受け取りいただけます。1回のご注文につき1セット・なくなり次第終了。',
+      see: 'ギフトを見る',
       previewNote: 'プレビュー：Shopifyの割引設定が完了するまで、ギフトはチェックアウトで課金されます。',
       solidNote: 'プレビュー：オンラインストアには未登録です。'
     }
@@ -136,17 +163,20 @@
 
   const copy = COPY[JA_PATH_PATTERN.test(window.location.pathname) ? 'ja' : 'en'];
   const reducedMotion = window.matchMedia(REDUCED_MOTION_QUERY);
-  const state = { ready: false, busy: false, lines: [], gifts: {}, solid: null, failed: new Set(), loading: '', hostTotal: 0, lastPaid: null, queue: [], popup: null, returnFocus: null, scrollLocked: false, resumeScroll: false, messageHtml: '', expect: { present: [], absent: [] }, waiters: [] };
+  const state = { ready: false, busy: false, lines: [], gifts: {}, solid: null, failed: new Set(), loading: '', hostTotal: 0, lastPaid: null, queue: [], popup: null, pick: '', returnFocus: null, scrollLocked: false, resumeScroll: false, messageHtml: '', expect: { present: [], absent: [] }, waiters: [] };
   const refs = {};
 
   const css = `
     .shipping-progress.${OFF_CLASS}{position:absolute;visibility:hidden;pointer-events:none}
     .bfg-progress{position:relative;z-index:2}
     .bfg-progress::after{content:'';position:absolute;top:100%;left:0;width:100%;height:1.5rem;background:${COLORS.cream};z-index:1;pointer-events:none}
+    .bfg-progress__head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:0 16px}
     .bfg-progress__msg{margin:0;font-size:14px;line-height:20px}
+    .bfg-progress__ship{margin:0;font-size:12px;line-height:20px;opacity:.6}
     .bfg-progress__link{all:unset;cursor:pointer;color:${COLORS.terra};border-bottom:1px solid currentColor}
     .bfg-progress__link:focus-visible{outline:1px solid ${COLORS.ink};outline-offset:3px}
-    .bfg-bar{position:relative;height:${POINT_SIZE}px;margin:10px ${POINT_SIZE / 2}px 26px 0}
+    .bfg-bar{position:relative;height:${POINT_SIZE}px;margin:10px ${POINT_SIZE / 2}px 26px 0;cursor:pointer;outline:none}
+    .bfg-bar:focus-visible{outline:1px solid ${COLORS.ink};outline-offset:6px}
     .bfg-points{margin:0;padding:0;list-style:none}
     .bfg-bar__track,.bfg-bar__fill{position:absolute;top:50%;left:0;height:${TRACK_HEIGHT}px;margin-top:-${TRACK_HEIGHT / 2}px}
     .bfg-bar__track{right:0;background:${COLORS.track}}
@@ -158,24 +188,37 @@
     .bfg-point__label{position:absolute;top:${POINT_SIZE + 6}px;left:50%;transform:translateX(-50%);white-space:nowrap;font:400 12px/1.3 ${FONTS.text};color:${COLORS.ink};opacity:.55;transition:opacity .4s .25s}
     .bfg-point.${DONE_CLASS} .bfg-point__label{opacity:1}
     .bfg-point:last-child .bfg-point__label{left:auto;right:0;transform:none;text-align:right}
-    .bfg-progress__ship{margin:0;font-size:12px;line-height:18px;opacity:.6}
-    [data-cart-lines] .cart-line.${LINE_CLASS}{padding:1.25rem 0}
-    .${LINE_CLASS} .cart-line-img{width:88px;height:112px}
-    .${LINE_CLASS} .cart-line-info{justify-content:flex-start}
-    .${LINE_CLASS} .cart-line-qty{margin:.75rem 0 0}
+    .cart-line.${LINE_CLASS}{cursor:pointer}
     .${LINE_CLASS} .cart-line-price{white-space:nowrap;padding-left:.75rem}
-    .${LINE_CLASS} .bfg-gift-img{object-fit:contain;padding:14px;box-sizing:border-box;background:${COLORS.wash}}
+    .${LINE_CLASS} .bfg-gift-img{min-height:${LINE_IMAGE_HEIGHT}px;object-fit:contain;padding:22px;box-sizing:border-box;background:${COLORS.wash}}
     .${LINE_CLASS}.${BUSY_CLASS}{opacity:.45;pointer-events:none}
     .bfg-was{margin-right:.6em;opacity:.5}
     .bfg-free{color:${COLORS.terra}}
     .bfg-tag{font-size:14px;opacity:.6}
     .bfg-note{margin:0;padding:1rem 0 0;font-size:11px;line-height:1.6;opacity:.6}
-    .bfg-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px 12px;margin:0 0 22px}
-    .bfg-option{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:12px;min-width:0;padding:6px;border:1px solid transparent;cursor:pointer;transition:border-color .3s}
-    .bfg-option:hover,.bfg-option.${CURRENT_CLASS}{border-color:${COLORS.hover}}
+    .bfg-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 24px}
+    .bfg-option{all:unset;box-sizing:border-box;position:relative;display:flex;align-items:center;gap:12px;min-width:0;padding:8px ${MARK_SIZE + 20}px 8px 8px;border:1px solid ${COLORS.track};cursor:pointer;transition:border-color .3s,background-color .3s}
+    .bfg-option:hover{border-color:${COLORS.hover}}
+    .bfg-option.${CURRENT_CLASS}{border-color:${COLORS.ink};background:${COLORS.wash}}
     .bfg-option:focus-visible{outline:1px solid ${COLORS.ink};outline-offset:2px}
     .bfg-option img{flex:none;width:48px;height:60px;object-fit:cover}
-    .bfg-option span{min-width:0;font:400 14px/1.3 ${FONTS.title}}
+    .bfg-option__name{min-width:0;font:400 14px/1.3 ${FONTS.title}}
+    .bfg-option__mark{position:absolute;top:50%;right:10px;box-sizing:border-box;width:${MARK_SIZE}px;height:${MARK_SIZE}px;margin-top:-${MARK_SIZE / 2}px;border:1px solid ${COLORS.hover};border-radius:50%;transition:border-color .3s}
+    .bfg-option__mark::after{content:'';position:absolute;inset:3px;border-radius:50%;background:${COLORS.ink};transform:scale(0);transition:transform .3s ${EASE_OUT}}
+    .bfg-option.${CURRENT_CLASS} .bfg-option__mark{border-color:${COLORS.ink}}
+    .bfg-option.${CURRENT_CLASS} .bfg-option__mark::after{transform:scale(1)}
+    .bfg-gifts{list-style:none;margin:0 0 18px;padding:0;border-top:1px solid ${COLORS.track}}
+    .bfg-gift{display:flex;align-items:center;gap:16px;margin:0;padding:14px 0;border-bottom:1px solid ${COLORS.track}}
+    .bfg-gift__img{flex:none;width:56px;height:56px;object-fit:contain}
+    .bfg-gift__text{flex:1;min-width:0}
+    .bfg-gift__name{display:block;font:400 16px/1.3 ${FONTS.title}}
+    .bfg-gift__rule{display:block;margin-top:2px;font:400 12px/1.5 ${FONTS.text};opacity:.6}
+    .bfg-gift__state{flex:none;max-width:46%;font:400 12px/1.5 ${FONTS.text};text-align:right}
+    .bfg-gift__state.${MUTED_CLASS}{opacity:.6}
+    .bfg-gift__action{all:unset;margin-left:10px;border-bottom:1px solid currentColor;color:${COLORS.terra};font:400 12px/1.4 ${FONTS.text};letter-spacing:.08em;cursor:pointer}
+    .bfg-gift__state .bfg-gift__action:first-child{margin-left:0}
+    .bfg-gift__action:focus-visible{outline:1px solid ${COLORS.ink};outline-offset:3px}
+    .bfg-pop__note{margin:0 0 22px;font:400 11px/1.8 ${FONTS.text};letter-spacing:.04em;opacity:.7}
     .bfg-pop{--bfg-card-width:${CARD_WIDTH.notice}px;position:fixed;inset:0;z-index:${Z_INDEX.popup};display:flex;align-items:center;justify-content:center;visibility:hidden;pointer-events:none}
     .bfg-pop.${VISIBLE_CLASS}{visibility:visible}
     .bfg-pop.${OPEN_CLASS}{pointer-events:auto}
@@ -187,7 +230,7 @@
     .bfg-pop:not(.${OPEN_CLASS}) .bfg-pop__card,.bfg-pop:not(.${OPEN_CLASS}) .bfg-pop__backdrop{transition-duration:${DURATION.close}ms;transition-timing-function:${EASE_IN}}
     .bfg-pop__scroll{box-sizing:border-box;width:100%;padding:44px 40px 36px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
     .bfg-pop__title{margin:0 0 14px;padding-right:${CLOSE_CLEARANCE}px;font:400 26px/1.2 ${FONTS.title};letter-spacing:.02em;color:${COLORS.ink}}
-    .bfg-pop__title,.bfg-pop__lead{word-break:keep-all;overflow-wrap:anywhere}
+    .bfg-pop__title,.bfg-pop__lead,.bfg-pop__note{word-break:keep-all;overflow-wrap:anywhere}
     .bfg-pop__lead{margin:0 0 20px;font:400 13px/1.8 ${FONTS.text};letter-spacing:.04em}
     .bfg-pop__gift{display:flex;align-items:center;gap:20px;margin:0 0 26px}
     .bfg-pop__gift img{flex:none;width:88px;height:88px;object-fit:contain}
@@ -195,6 +238,7 @@
     .bfg-pop__actions{display:flex;align-items:center;gap:24px}
     .bfg-pop__cta{all:unset;box-sizing:border-box;padding:16px 32px;background:${COLORS.ink};color:${COLORS.cream};font:400 12px/1 ${FONTS.text};letter-spacing:.16em;text-align:center;cursor:pointer;transition:opacity .3s}
     .bfg-pop__cta:hover{opacity:.85}
+    .bfg-pop__cta[disabled]{opacity:.3;cursor:default}
     .bfg-pop__later{all:unset;padding-bottom:3px;border-bottom:1px solid currentColor;font:400 12px/1 ${FONTS.text};letter-spacing:.12em;opacity:.7;cursor:pointer}
     .bfg-pop__cta:focus-visible,.bfg-pop__later:focus-visible{outline:1px solid ${COLORS.ink};outline-offset:3px}
     .bfg-pop__close:focus-visible{outline:1px solid ${COLORS.ink};outline-offset:-8px}
@@ -202,17 +246,22 @@
       .bfg-bar{margin-bottom:38px}
       .bfg-point__label{width:${LABEL_WIDTH}px;white-space:normal;font-size:11px;text-align:center}
       .bfg-point__wrap{display:block}
-      .bfg-options{grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 8px}
-      .bfg-option{gap:8px;padding:4px}
-      .bfg-option img{width:40px;height:50px}
-      .bfg-option span{font-size:13px}
+      .bfg-options{gap:8px;margin-bottom:16px}
+      .bfg-option{flex-direction:column;gap:6px;padding:10px 6px 8px;text-align:center}
+      .bfg-option img{width:52px;height:65px}
+      .bfg-option__name{font-size:13px;line-height:1.25}
+      .bfg-option__mark{top:8px;right:8px;margin-top:0}
       .bfg-pop{align-items:flex-end}
-      .bfg-pop .bfg-pop__card{width:100%;max-height:88vh;max-height:88dvh;opacity:1;transform:translateY(100%)}
+      .bfg-pop .bfg-pop__card{width:100%;max-height:90vh;max-height:90dvh;opacity:1;transform:translateY(100%)}
       .bfg-pop.${OPEN_CLASS} .bfg-pop__card{transform:none}
-      .bfg-pop__scroll{padding:30px 20px calc(24px + env(safe-area-inset-bottom))}
-      .bfg-pop__title{font-size:22px}
+      .bfg-pop__scroll{padding:28px 20px calc(22px + env(safe-area-inset-bottom))}
+      .bfg-pop__title{margin-bottom:10px;font-size:22px}
+      .bfg-pop__lead{margin-bottom:14px}
       .bfg-pop__gift img{width:72px;height:72px}
+      .bfg-pop__actions{gap:20px}
       .bfg-pop__cta{flex:1}
+      .bfg-gift{gap:12px}
+      .bfg-gift__img{width:48px;height:48px}
     }
     @media ${REDUCED_MOTION_QUERY}{.bfg-pop__card{transform:none!important;transition:opacity ${DURATION.backdrop}ms linear!important}}
   `;
@@ -293,6 +342,7 @@
   const readLines = () => [...refs.list.querySelectorAll(SELECTORS.line)].map((node) => {
     const remove = node.querySelector(SELECTORS.lineRemove);
     const match = LINE_ID_PATTERN.exec((remove && remove.getAttribute('onclick')) || '');
+    const title = node.querySelector(SELECTORS.lineTitle);
     const quantity = node.querySelector(SELECTORS.lineQuantity);
     const sku = node.querySelector(SELECTORS.lineSku);
     const price = node.querySelector(SELECTORS.linePrice);
@@ -301,6 +351,7 @@
       html: node.innerHTML,
       className: node.className,
       id: match ? match[1] : '',
+      name: title ? title.textContent.replace(TITLE_PREFIX_PATTERN, '').trim() : '',
       quantity: Number(quantity && quantity.textContent) || 1,
       sku: sku ? sku.textContent.trim() : '',
       price: parseYen(price && price.textContent)
@@ -322,7 +373,7 @@
       const product = window.getProduct(handle);
       const variant = product && product.variants.find((item) => tier.skuPattern.test(item.sku));
       if (!variant || !variant.available || state.failed.has(variant.id)) return null;
-      return { variantId: variant.id, sku: variant.sku, name: product.title.replace(TITLE_PREFIX_PATTERN, ''), image: variant.image || product.image };
+      return { variantId: variant.id, sku: variant.sku, price: Number(variant.price) || 0, name: product.title.replace(TITLE_PREFIX_PATTERN, ''), image: variant.image || product.image };
     }).filter(Boolean);
   };
 
@@ -403,13 +454,13 @@
     window.Cart.init();
   });
 
-  const shippingState = () => {
+  const shippingMessage = () => {
     const goalNode = document.querySelector(SELECTORS.shippingGoal);
     const goal = parseYen(goalNode && goalNode.textContent);
     const i18n = window.YokaiI18n;
-    if (!goal || !i18n) return null;
+    if (!goal || !i18n) return '';
     const remain = Math.max(0, goal - subtotal());
-    return { goal, ratio: Math.min(1, subtotal() / goal), done: remain === 0, message: remain ? i18n.freeShipRemain(remain) : i18n.freeShipDone };
+    return remain ? i18n.freeShipRemain(remain) : i18n.freeShipDone;
   };
 
   const openChoice = (paid) => TIERS.find((tier) => tier.choice && paid >= tier.buy && !giftLines(tier.key).length && offered(tier));
@@ -430,30 +481,35 @@
     const goal = TIERS[TIERS.length - 1].buy;
     refs.fill.style.width = `${Math.min(1, paid / goal) * 100}%`;
     TIERS.forEach((tier) => refs.points[tier.key].classList.toggle(DONE_CLASS, paid >= tier.buy));
-    const shipping = shippingState();
-    refs.ship.textContent = shipping ? shipping.message : '';
+    refs.ship.textContent = shippingMessage();
     const html = message(paid);
     if (state.messageHtml === html) return;
     state.messageHtml = html;
     refs.message.innerHTML = html;
   };
 
+  const priceHtml = (price) => `${price ? `<s class="bfg-was">${yen(price)}</s>` : ''}<span class="bfg-free">${copy.free}</span>`;
+
+  const controls = (tier, label) => `<span class="bfg-tag">${copy.gift}</span>${tier.choice ? `<button type="button" class="cart-line-remove" data-bfg-open="${tier.key}">${label}</button>` : ''}`;
+
   const decorate = (line, tier) => {
     const node = line.el;
     node.innerHTML = line.html;
     node.className = `${line.className} ${LINE_CLASS}`;
+    node.setAttribute('data-bfg-overview', SOURCES.line);
     const price = node.querySelector(SELECTORS.linePrice);
-    if (price) price.innerHTML = `<s class="bfg-was">${yen(line.price)}</s><span class="bfg-free">${copy.free}</span>`;
-    const controls = node.querySelector(SELECTORS.lineControls);
-    if (controls) controls.innerHTML = `<span class="bfg-tag">${copy.gift}</span>${tier.choice ? `<button type="button" class="cart-line-remove" data-bfg-open="${tier.key}">${copy.change}</button>` : ''}`;
+    if (price) price.innerHTML = priceHtml(line.price);
+    const slot = node.querySelector(SELECTORS.lineControls);
+    if (slot) slot.innerHTML = controls(tier, copy.change);
     if (state.loading === tier.key) node.classList.add(BUSY_CLASS);
     return node;
   };
 
   const placeholder = (tier) => {
-    const detail = tier.choice ? '' : `<p class="cart-line-purfume-style">${copy.solidNote}</p>`;
-    const action = tier.choice ? `<button type="button" class="cart-line-remove" data-bfg-open="${tier.key}">${copy.pick}</button>` : '';
-    const node = element('div', `${NODE_CLASS} cart-line ${LINE_CLASS}`, `<img class="cart-line-img bfg-gift-img" src="${GIFT_IMAGES[tier.key]}" alt=""><div class="cart-line-info"><div class="cart-line-info-wrapper"><div class="cart-line-title-and-price"><p class="cart-line-title">${copy.names[tier.key]}</p><p class="cart-line-price"><span class="bfg-free">${copy.free}</span></p></div>${detail}</div><div class="cart-line-qty"><span class="bfg-tag">${copy.gift}</span>${action}</div></div>`);
+    const sample = options(tier)[0];
+    const detail = tier.choice ? `<p class="cart-line-purfume-style">${copy.style}</p><p class="cart-line-variant"><span>${copy.pending}</span></p>` : `<p class="cart-line-purfume-style">${copy.solidNote}</p>`;
+    const node = element('div', `${NODE_CLASS} cart-line ${LINE_CLASS}`, `<img class="cart-line-img bfg-gift-img" src="${GIFT_IMAGES[tier.key]}" alt=""><div class="cart-line-info"><div class="cart-line-info-wrapper"><div class="cart-line-title-and-price"><p class="cart-line-title">${copy.names[tier.key]}</p><p class="cart-line-price">${priceHtml(sample ? sample.price : 0)}</p></div>${detail}</div><div class="cart-line-qty">${controls(tier, copy.pick)}</div></div>`);
+    node.setAttribute('data-bfg-overview', SOURCES.line);
     if (state.loading === tier.key) node.classList.add(BUSY_CLASS);
     return node;
   };
@@ -506,42 +562,70 @@
     }
   };
 
-  const popupBody = (tier, mode) => {
-    const title = mode === MODES.unlock ? copy.unlocked[tier.key] : copy.choose[tier.key];
-    const head = `<h2 class="bfg-pop__title" id="bfg-pop-title">${title}</h2>`;
-    if (!tier.choice) {
-      const nudge = nextMessage(paidCount());
-      return `${head}<div class="bfg-pop__gift"><img src="${GIFT_IMAGES[tier.key]}" alt=""><p class="bfg-pop__lead">${copy.added}${nudge ? `<br>${nudge}` : ''}</p></div><div class="bfg-pop__actions"><button type="button" class="bfg-pop__cta" data-bfg-close="proceed">${copy.proceed}</button></div>`;
-    }
-    const line = giftLines(tier.key)[0];
-    const buttons = options(tier).map((item) => {
-      const current = Boolean(line) && line.sku === item.sku;
-      return `<button type="button" class="bfg-option${current ? ` ${CURRENT_CLASS}` : ''}" data-bfg-choose="${tier.key}" data-variant-id="${escapeHtml(item.variantId)}" aria-pressed="${current ? 'true' : 'false'}"><img src="${escapeHtml(thumb(item.image))}" alt="" decoding="async"><span>${escapeHtml(item.name)}</span></button>`;
-    }).join('');
-    const lead = mode === MODES.unlock ? `<p class="bfg-pop__lead">${copy.pickLead}</p>` : '';
-    return `${head}${lead}<div class="bfg-options" role="group" aria-label="${copy.choose[tier.key]}">${buttons}</div><div class="bfg-pop__actions"><button type="button" class="bfg-pop__later" data-bfg-close="later">${line ? copy.close : copy.later}</button></div>`;
+  const noticeBody = (tier) => {
+    const nudge = nextMessage(paidCount());
+    return `<h2 class="bfg-pop__title" id="bfg-pop-title">${copy.unlocked[tier.key]}</h2><div class="bfg-pop__gift"><img src="${GIFT_IMAGES[tier.key]}" alt=""><p class="bfg-pop__lead">${copy.added}${nudge ? `<br>${nudge}` : ''}</p></div><div class="bfg-pop__actions"><button type="button" class="bfg-pop__cta" data-bfg-close="proceed">${copy.proceed}</button></div>`;
   };
 
-  const openPopup = (tier, mode) => {
-    if (state.popup || !offered(tier)) return false;
-    state.popup = tier.key;
-    state.returnFocus = document.activeElement;
-    refs.popupBody.innerHTML = popupBody(tier, mode);
-    refs.popup.classList.toggle(CHOICE_CLASS, tier.choice);
+  const pickerBody = (tier, mode) => {
+    const line = giftLines(tier.key)[0];
+    const items = options(tier);
+    const current = line ? items.find((item) => item.sku === line.sku) : null;
+    state.pick = current ? current.variantId : '';
+    const title = mode === MODES.unlock ? copy.unlocked[tier.key] : copy.choose[tier.key];
+    const buttons = items.map((item) => {
+      const picked = item.variantId === state.pick;
+      return `<button type="button" role="radio" aria-checked="${picked ? 'true' : 'false'}" class="bfg-option${picked ? ` ${CURRENT_CLASS}` : ''}" data-bfg-pick="${escapeHtml(item.variantId)}"><img src="${escapeHtml(thumb(item.image))}" alt="" decoding="async"><span class="bfg-option__name">${escapeHtml(item.name)}</span><span class="bfg-option__mark" aria-hidden="true"></span></button>`;
+    }).join('');
+    return `<h2 class="bfg-pop__title" id="bfg-pop-title">${title}</h2><p class="bfg-pop__lead">${copy.pickLead}</p><div class="bfg-options" role="radiogroup" aria-label="${copy.choose[tier.key]}">${buttons}</div><div class="bfg-pop__actions"><button type="button" class="bfg-pop__cta" data-bfg-choose="${tier.key}"${state.pick ? '' : ' disabled'}>${line ? copy.update : copy.confirm}</button><button type="button" class="bfg-pop__later" data-bfg-close="later">${line ? copy.close : copy.later}</button></div>`;
+  };
+
+  const giftState = (tier, paid) => {
+    if (paid < tier.buy) return `<span class="bfg-gift__state ${MUTED_CLASS}">${copy.remaining(tier.buy - paid)}</span>`;
+    if (!tier.choice) return `<span class="bfg-gift__state">${copy.inCart}</span>`;
+    const line = giftLines(tier.key)[0];
+    const action = `<button type="button" class="bfg-gift__action" data-bfg-open="${tier.key}">${line ? copy.change : copy.pick}</button>`;
+    return `<span class="bfg-gift__state">${line ? escapeHtml(line.name) : ''}${action}</span>`;
+  };
+
+  const overviewBody = () => {
+    const paid = paidCount();
+    const rows = TIERS.map((tier) => `<li class="bfg-gift"><img class="bfg-gift__img" src="${GIFT_IMAGES[tier.key]}" alt=""><span class="bfg-gift__text"><span class="bfg-gift__name">${copy.names[tier.key]}</span><span class="bfg-gift__rule">${copy.rule(tier.buy)}</span></span>${giftState(tier, paid)}</li>`).join('');
+    return `<h2 class="bfg-pop__title" id="bfg-pop-title">${copy.overview}</h2><ul class="bfg-gifts">${rows}</ul><p class="bfg-pop__note">${copy.terms}</p><div class="bfg-pop__actions"><button type="button" class="bfg-pop__cta" data-bfg-close="proceed">${copy.proceed}</button></div>`;
+  };
+
+  const present = (key, html, choice) => {
+    const switching = Boolean(state.popup);
+    state.popup = key;
+    refs.popupBody.innerHTML = html;
     refs.popupBody.scrollTop = 0;
-    refs.popup.classList.add(VISIBLE_CLASS);
-    refs.popup.setAttribute('aria-hidden', 'false');
-    refs.popupCard.getBoundingClientRect();
-    window.requestAnimationFrame(() => refs.popup.classList.add(OPEN_CLASS));
-    lockScroll(true);
+    refs.popup.classList.toggle(CHOICE_CLASS, choice);
+    if (!switching) {
+      state.returnFocus = document.activeElement;
+      refs.popup.classList.add(VISIBLE_CLASS);
+      refs.popup.setAttribute('aria-hidden', 'false');
+      refs.popupCard.getBoundingClientRect();
+      window.requestAnimationFrame(() => refs.popup.classList.add(OPEN_CLASS));
+      lockScroll(true);
+    }
     refs.popupCard.focus({ preventScroll: true });
+  };
+
+  const openGift = (tier, mode) => {
+    if (!tier || !offered(tier)) return false;
+    present(tier.key, tier.choice ? pickerBody(tier, mode) : noticeBody(tier), tier.choice);
     return true;
+  };
+
+  const openOverview = (source) => {
+    present(OVERVIEW_KEY, overviewBody(), false);
+    track(TRACK_ACTIONS.view, source);
   };
 
   const openNext = () => {
     while (!state.popup && state.queue.length) {
       const tier = tierOf(state.queue.shift());
-      if (paidCount() >= tier.buy && openPopup(tier, MODES.unlock)) {
+      if (paidCount() >= tier.buy && openGift(tier, MODES.unlock)) {
         markSeen(tier.key);
         track(TRACK_ACTIONS.unlock, tier.key);
       }
@@ -590,8 +674,20 @@
     }
   };
 
-  const choose = (key, variantId) => {
-    setChoice(key, variantId);
+  const pick = (variantId) => {
+    state.pick = variantId;
+    refs.popupBody.querySelectorAll(SELECTORS.option).forEach((option) => {
+      const picked = option.getAttribute('data-bfg-pick') === variantId;
+      option.classList.toggle(CURRENT_CLASS, picked);
+      option.setAttribute('aria-checked', picked ? 'true' : 'false');
+    });
+    const confirm = refs.popupBody.querySelector(SELECTORS.confirm);
+    if (confirm) confirm.disabled = false;
+  };
+
+  const choose = (key) => {
+    if (!state.pick) return;
+    setChoice(key, state.pick);
     track(TRACK_ACTIONS.choose, key);
     state.loading = key;
     closePopup();
@@ -615,21 +711,24 @@
     const target = event.target.closest(SELECTORS.action);
     if (!target) return;
     event.preventDefault();
-    if (target.hasAttribute('data-bfg-choose')) choose(target.getAttribute('data-bfg-choose'), target.getAttribute('data-variant-id'));
-    else if (target.hasAttribute('data-bfg-open')) openPopup(tierOf(target.getAttribute('data-bfg-open')), MODES.choose);
+    if (target.hasAttribute('data-bfg-pick')) pick(target.getAttribute('data-bfg-pick'));
+    else if (target.hasAttribute('data-bfg-choose')) choose(target.getAttribute('data-bfg-choose'));
+    else if (target.hasAttribute('data-bfg-open')) openGift(tierOf(target.getAttribute('data-bfg-open')), MODES.choose);
+    else if (target.hasAttribute('data-bfg-overview')) openOverview(target.getAttribute('data-bfg-overview'));
     else closePopup();
   };
 
   const onKeydown = (event) => {
+    const trigger = event.target.closest && event.target.closest('[role="button"][data-bfg-overview], [role="button"][data-bfg-close]');
+    if (trigger && ACTIVATE_KEYS.includes(event.key)) {
+      event.preventDefault();
+      if (trigger.hasAttribute('data-bfg-overview')) openOverview(trigger.getAttribute('data-bfg-overview'));
+      else closePopup();
+      return;
+    }
     if (!state.popup) return;
     if (event.key === 'Escape') {
       event.stopPropagation();
-      closePopup();
-      return;
-    }
-    const closer = event.target.closest && event.target.closest('[data-bfg-close]');
-    if (closer && closer.getAttribute('role') === 'button' && ACTIVATE_KEYS.includes(event.key)) {
-      event.preventDefault();
       closePopup();
       return;
     }
@@ -660,7 +759,7 @@
   const buildProgress = () => {
     const goal = TIERS[TIERS.length - 1].buy;
     const points = TIERS.map((tier) => `<li class="bfg-point" data-bfg-point="${tier.key}" style="left:${(tier.buy / goal) * 100}%">${GIFT_ICON}<span class="bfg-point__label">${railLabel(tier.key)}</span></li>`).join('');
-    const node = element('div', 'bfg-progress', `<p class="bfg-progress__msg" aria-live="polite"></p><div class="bfg-bar"><span class="bfg-bar__track" aria-hidden="true"></span><span class="bfg-bar__fill" aria-hidden="true"></span><ol class="bfg-points">${points}</ol></div><p class="bfg-progress__ship"></p>`);
+    const node = element('div', 'bfg-progress', `<div class="bfg-progress__head"><p class="bfg-progress__msg" aria-live="polite"></p><p class="bfg-progress__ship"></p></div><div class="bfg-bar" role="button" tabindex="0" data-bfg-overview="${SOURCES.bar}" aria-label="${copy.see}"><span class="bfg-bar__track" aria-hidden="true"></span><span class="bfg-bar__fill" aria-hidden="true"></span><ol class="bfg-points">${points}</ol></div>`);
     refs.shipping.classList.add(OFF_CLASS);
     refs.shipping.insertAdjacentElement('afterend', node);
     refs.message = node.querySelector('.bfg-progress__msg');
