@@ -1,6 +1,6 @@
 (() => {
   const PREVIEW_HOST_PATTERN = /\.webflow\.io$/;
-  if (!PREVIEW_HOST_PATTERN.test(window.location.hostname)) return;
+  const PREVIEW = PREVIEW_HOST_PATTERN.test(window.location.hostname);
 
   const STOREFRONT = { endpoint: 'https://yokai-sake.myshopify.com/api/2025-01/graphql.json', token: '1432a4269f2a938b1e58ab4c6b49138a' };
   const CART_KEY = 'yokai_cart_id';
@@ -14,7 +14,6 @@
   const NON_NUMERIC_PATTERN = /[^\d.-]/g;
   const ESCAPE_PATTERN = /[&<>"']/g;
   const ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
-  const PREVIEW_SHOWS_UNAVAILABLE = true;
   const GIFT_TAG = 'bf2026-gift';
   const GIFT_SKU_PREFIX = 'GIFT-';
   const GIFT_TITLE_PATTERN = /\s*\(Gift\)\s*$/i;
@@ -409,7 +408,7 @@
   const offered = (tier) => {
     if (state.blocked.has(tier.key)) return false;
     if (tier.choice) return options(tier).length > 0;
-    return Boolean(state.catalog.solid) && (state.catalog.solid.available || PREVIEW_SHOWS_UNAVAILABLE);
+    return Boolean(state.catalog.solid) && (state.catalog.solid.available || PREVIEW);
   };
 
   const wanted = (tier) => {
@@ -565,7 +564,7 @@
     return node;
   };
 
-  const pendingStock = (tier) => PREVIEW_SHOWS_UNAVAILABLE && !tier.choice && offered(tier) && !state.catalog.solid.available;
+  const pendingStock = (tier) => PREVIEW && !tier.choice && offered(tier) && !state.catalog.solid.available;
 
   const paintLines = (paid) => {
     refs.list.querySelectorAll(`.${NODE_CLASS}`).forEach((node) => node.remove());
