@@ -29,6 +29,9 @@
   const COLORS = { terra: '#B15A3D', terraSmall: '#A5512F', wine: '#7A3036', cream: '#F5EFE1', ink: '#1E1C20', backdrop: 'rgba(20, 16, 18, 0.5)', rule: 'rgba(30, 28, 32, 0.12)', handle: 'rgba(30, 28, 32, 0.35)' };
   const FONTS = { title: "Optima, 'Palatino Linotype', sans-serif", text: 'ibm-plex-sans-jp, sans-serif' };
   const TRACK_EVENT = 'yokai_campaign';
+  const TRACK_ID_PATTERN = /^G-/;
+  const TRACK_RETRY_INTERVAL = 500;
+  const TRACK_RETRY_LIMIT = 40;
   const AUTO_SOURCE = 'auto';
   const POPUP_SOURCE = 'popup';
   const SITE_CLOSE_CLASS = 'close-svg';
@@ -95,6 +98,7 @@
   const reducedMotion = window.matchMedia(REDUCED_MOTION_QUERY);
   const state = { open: false, returnFocus: null, dragStart: null, dragDistance: 0 };
   const refs = {};
+  const tracking = { queue: [], timer: null };
 
   const css = `
     :root{--bf-bar-h:${BAR_HEIGHT.desktop}px}
@@ -178,13 +182,28 @@
     @media ${REDUCED_MOTION_QUERY}{.bf-pop__card{transform:none!important;transition:opacity ${DURATION.backdrop}ms linear!important}}
   `;
 
-  const track = (action, source) => {
+  const trackTargets = () => Object.keys(window.google_tag_manager || {}).filter((key) => TRACK_ID_PATTERN.test(key));
+
+  const flushTracking = (attempt = 0) => {
+    const targets = trackTargets();
+    if (!targets.length) {
+      window.clearTimeout(tracking.timer);
+      if (attempt < TRACK_RETRY_LIMIT) tracking.timer = window.setTimeout(() => flushTracking(attempt + 1), TRACK_RETRY_INTERVAL);
+      return;
+    }
     window.dataLayer = window.dataLayer || [];
     const send = function () {
       window.dataLayer.push(arguments);
     };
-    send('event', `${TRACK_EVENT}_${action}`, { campaign: CAMPAIGN_ID, campaign_source: source });
+    tracking.queue.splice(0).forEach((item) => send('event', item.name, { campaign: CAMPAIGN_ID, campaign_source: item.source, send_to: targets }));
   };
+
+  const track = (action, source) => {
+    tracking.queue.push({ name: `${TRACK_EVENT}_${action}`, source });
+    flushTracking();
+  };
+
+  window.YokaiCampaign = { track };
 
   const element = (tag, className, html) => {
     const node = document.createElement(tag);

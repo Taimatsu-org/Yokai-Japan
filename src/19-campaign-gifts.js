@@ -24,6 +24,8 @@
   const MOBILE_QUERY = '(max-width: 767px)';
   const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
   const Z_INDEX = { popup: 10010 };
+  const CARD_WIDTH = { notice: 520, choice: 680 };
+  const TRACK_ACTIONS = { unlock: 'gift_unlock', choose: 'gift_choose' };
   const DURATION = { backdrop: 600, card: 700, close: 420 };
   const NODE_CLASS = 'bfg-node';
   const LINE_CLASS = 'bfg-line';
@@ -33,6 +35,7 @@
   const CURRENT_CLASS = 'is-current';
   const VISIBLE_CLASS = 'is-visible';
   const OPEN_CLASS = 'is-open';
+  const CHOICE_CLASS = 'bfg-pop--choice';
   const SITE_CLOSE_CLASS = 'close-svg';
   const SITE_CLOSE_ICON_CLASS = 'close-x';
   const ACTIVATE_KEYS = ['Enter', ' '];
@@ -159,7 +162,7 @@
     .bfg-step__when{display:block;font-size:10.5px;letter-spacing:.12em;color:${COLORS.terra}}
     .bfg-heading{margin:0;padding:1.5rem 0 .25rem;font:400 11px/1 ${FONTS.text};letter-spacing:.24em;color:${COLORS.terra}}
     [data-cart-lines] .cart-line.${LINE_CLASS}{padding:1.25rem 0}
-    .${LINE_CLASS} .cart-line-img{width:88px;height:auto;min-height:112px}
+    .${LINE_CLASS} .cart-line-img{width:88px;height:112px}
     .${LINE_CLASS} .cart-line-info{justify-content:flex-start}
     .${LINE_CLASS} .cart-line-qty{margin:.75rem 0 0}
     .${LINE_CLASS} .cart-line-price{white-space:nowrap;padding-left:.75rem}
@@ -180,7 +183,8 @@
     .bfg-pop.${OPEN_CLASS}{pointer-events:auto}
     .bfg-pop__backdrop{position:absolute;inset:0;background:${COLORS.backdrop};opacity:0;touch-action:none;transition:opacity ${DURATION.backdrop}ms ${EASE_OUT}}
     .bfg-pop.${OPEN_CLASS} .bfg-pop__backdrop{opacity:1}
-    .bfg-pop__card{position:relative;display:flex;width:min(580px,calc(100vw - 48px));max-height:calc(100vh - 64px);max-height:calc(100dvh - 64px);background:${COLORS.cream} var(--bfg-texture,none) center/cover;color:${COLORS.ink};opacity:0;transform:translateY(24px);transition:opacity ${DURATION.card}ms ${EASE_OUT},transform ${DURATION.card}ms ${EASE_OUT};outline:none}
+    .bfg-pop__card{position:relative;display:flex;width:min(${CARD_WIDTH.notice}px,calc(100vw - 48px));max-height:calc(100vh - 64px);max-height:calc(100dvh - 64px);background:${COLORS.cream} var(--bfg-texture,none) center/cover;color:${COLORS.ink};opacity:0;transform:translateY(24px);transition:opacity ${DURATION.card}ms ${EASE_OUT},transform ${DURATION.card}ms ${EASE_OUT};outline:none}
+    .bfg-pop.${CHOICE_CLASS} .bfg-pop__card{width:min(${CARD_WIDTH.choice}px,calc(100vw - 48px))}
     .bfg-pop.${OPEN_CLASS} .bfg-pop__card{opacity:1;transform:none}
     .bfg-pop:not(.${OPEN_CLASS}) .bfg-pop__card,.bfg-pop:not(.${OPEN_CLASS}) .bfg-pop__backdrop{transition-duration:${DURATION.close}ms;transition-timing-function:${EASE_IN}}
     .bfg-pop__scroll{box-sizing:border-box;width:100%;padding:44px 40px 36px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
@@ -205,7 +209,8 @@
       .bfg-option img{width:40px;height:50px}
       .bfg-option span{font-size:13px}
       .bfg-pop{align-items:flex-end}
-      .bfg-pop__card{width:100%;max-height:88vh;max-height:88dvh;opacity:1;transform:translateY(100%)}
+      .bfg-pop .bfg-pop__card{width:100%;max-height:88vh;max-height:88dvh;opacity:1;transform:translateY(100%)}
+      .bfg-pop.${OPEN_CLASS} .bfg-pop__card{transform:none}
       .bfg-pop__scroll{padding:30px 20px calc(24px + env(safe-area-inset-bottom))}
       .bfg-pop__title{font-size:22px}
       .bfg-pop__gift img{width:72px;height:72px}
@@ -263,6 +268,10 @@
   };
 
   const tierOf = (key) => TIERS.find((tier) => tier.key === key);
+
+  const track = (action, source) => {
+    if (window.YokaiCampaign && window.YokaiCampaign.track) window.YokaiCampaign.track(action, source);
+  };
 
   const giftAttributes = (key) => [{ key: GIFT_ATTRIBUTE, value: key }];
 
@@ -532,6 +541,7 @@
     state.popup = tier.key;
     state.returnFocus = document.activeElement;
     refs.popupBody.innerHTML = popupBody(tier, mode);
+    refs.popup.classList.toggle(CHOICE_CLASS, tier.choice);
     refs.popupBody.scrollTop = 0;
     refs.popup.classList.add(VISIBLE_CLASS);
     refs.popup.setAttribute('aria-hidden', 'false');
@@ -545,7 +555,10 @@
   const openNext = () => {
     while (!state.popup && state.queue.length) {
       const tier = tierOf(state.queue.shift());
-      if (paidCount() >= tier.buy && openPopup(tier, MODES.unlock)) markSeen(tier.key);
+      if (paidCount() >= tier.buy && openPopup(tier, MODES.unlock)) {
+        markSeen(tier.key);
+        track(TRACK_ACTIONS.unlock, tier.key);
+      }
     }
   };
 
@@ -593,6 +606,7 @@
 
   const choose = (key, variantId) => {
     setChoice(key, variantId);
+    track(TRACK_ACTIONS.choose, key);
     state.loading = key;
     closePopup();
     paint();
