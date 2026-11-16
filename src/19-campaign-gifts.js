@@ -30,7 +30,7 @@
   const MOBILE_QUERY = '(max-width: 767px)';
   const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
   const Z_INDEX = { popup: 10010 };
-  const CARD_WIDTH = { notice: 520, choice: 680 };
+  const CARD_WIDTH = { notice: 520, choice: 760 };
   const TRACK_ACTIONS = { unlock: 'gift_unlock', choose: 'gift_choose', view: 'gift_view' };
   const DURATION = { backdrop: 600, card: 700, close: 420 };
   const NODE_CLASS = 'bfg-node';
@@ -215,8 +215,8 @@
     .bfg-gift__rule{display:block;margin-top:2px;font:400 12px/1.5 ${FONTS.text};opacity:.6}
     .bfg-gift__state{flex:none;max-width:46%;font:400 12px/1.5 ${FONTS.text};text-align:right}
     .bfg-gift__state.${MUTED_CLASS}{opacity:.6}
-    .bfg-gift__action{all:unset;margin-left:10px;border-bottom:1px solid currentColor;color:${COLORS.terra};font:400 12px/1.4 ${FONTS.text};letter-spacing:.08em;cursor:pointer}
-    .bfg-gift__state .bfg-gift__action:first-child{margin-left:0}
+    .bfg-gift__value{margin-right:10px}
+    .bfg-gift__action{all:unset;border-bottom:1px solid currentColor;color:${COLORS.terra};font:400 12px/1.4 ${FONTS.text};letter-spacing:.08em;cursor:pointer}
     .bfg-gift__action:focus-visible{outline:1px solid ${COLORS.ink};outline-offset:3px}
     .bfg-pop__note{margin:0 0 22px;font:400 11px/1.8 ${FONTS.text};letter-spacing:.04em;opacity:.7}
     .bfg-pop{--bfg-card-width:${CARD_WIDTH.notice}px;position:fixed;inset:0;z-index:${Z_INDEX.popup};display:flex;align-items:center;justify-content:center;visibility:hidden;pointer-events:none}
@@ -585,7 +585,7 @@
     if (!tier.choice) return `<span class="bfg-gift__state">${copy.inCart}</span>`;
     const line = giftLines(tier.key)[0];
     const action = `<button type="button" class="bfg-gift__action" data-bfg-open="${tier.key}">${line ? copy.change : copy.pick}</button>`;
-    return `<span class="bfg-gift__state">${line ? escapeHtml(line.name) : ''}${action}</span>`;
+    return `<span class="bfg-gift__state">${line ? `<span class="bfg-gift__value">${escapeHtml(line.name)}</span>` : ''}${action}</span>`;
   };
 
   const overviewBody = () => {
