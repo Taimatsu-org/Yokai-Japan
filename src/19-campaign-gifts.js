@@ -14,7 +14,11 @@
   const NON_NUMERIC_PATTERN = /[^\d.-]/g;
   const ESCAPE_PATTERN = /[&<>"']/g;
   const ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
-  const PREVIEW_ASSUMES_FREE = true;
+  const PREVIEW_SHOWS_UNAVAILABLE = true;
+  const GIFT_TAG = 'bf2026-gift';
+  const GIFT_SKU_PREFIX = 'GIFT-';
+  const GIFT_TITLE_PATTERN = /\s*\(Gift\)\s*$/i;
+  const CATALOG_LIMIT = 30;
   const MAX_ROUNDS = 6;
   const HOST_POLL_INTERVAL = 250;
   const HOST_POLL_LIMIT = 80;
@@ -39,6 +43,7 @@
   const DONE_CLASS = 'is-done';
   const BUSY_CLASS = 'is-busy';
   const CURRENT_CLASS = 'is-current';
+  const LAST_CLASS = 'is-last';
   const MUTED_CLASS = 'is-muted';
   const VISIBLE_CLASS = 'is-visible';
   const OPEN_CLASS = 'is-open';
@@ -61,9 +66,9 @@
   const GIFT_ICON = `<svg class="bfg-point__icon" viewBox="0 0 12 12" width="${ICON_SIZE}" height="${ICON_SIZE}" fill="none" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.6 5.4h8.8v5H1.6zM1 3.6h10v1.8H1zM6 3.6v6.8M6 3.6C5.4 1.9 3.5 1.6 3.3 2.6 3.1 3.5 4.6 3.7 6 3.6ZM6 3.6c.6-1.7 2.5-2 2.7-1 .2.9-1.3 1.1-2.7 1Z"/></svg>`;
 
   const TIERS = [
-    { key: 'solid', buy: 2, sku: 'SP001', choice: false },
-    { key: 'small', buy: 3, skuPattern: /-9$/, choice: true },
-    { key: 'large', buy: 5, skuPattern: /-30$/, choice: true }
+    { key: 'solid', buy: 2, skuPattern: /^SP001$/, choice: false },
+    { key: 'small', buy: 3, skuPattern: /^GIFT-PF\d+-9$/, choice: true },
+    { key: 'large', buy: 5, skuPattern: /^GIFT-PF\d+-30$/, choice: true }
   ];
 
   const SELECTORS = {
@@ -73,6 +78,8 @@
     total: '[data-cart-total]',
     line: '.cart-line',
     lineTitle: '.cart-line-title',
+    lineStyle: '.cart-line-purfume-style',
+    lineImage: '.cart-line-img',
     lineRemove: '.cart-line-remove',
     lineQuantity: '.cart-line-qty-selector span',
     lineSku: '.cart-line-variant span:last-child',
@@ -88,9 +95,9 @@
 
   const COPY = {
     en: {
-      start: 'Buy 2 perfumes for a free solid perfume',
+      begin: (count, gift) => `Buy ${count} perfumes for a free ${gift}`,
       more: (count, gift) => `${count} more ${count === 1 ? 'perfume' : 'perfumes'} for a free ${gift}`,
-      complete: 'You have all three gifts',
+      complete: 'You have all the gifts',
       rail: { solid: ['Solid', 'perfume'], small: ['9 mL', 'perfume'], large: ['30 mL', 'perfume'] },
       names: { solid: 'Solid perfume', small: '9 mL perfume', large: '30 mL perfume' },
       inline: { solid: 'solid perfume', small: '9 mL perfume', large: '30 mL perfume' },
@@ -115,13 +122,12 @@
       inCart: 'In your cart',
       terms: 'Any size counts. Gifts add up. One set of gifts per order, while supplies last.',
       see: 'See the gifts',
-      previewNote: 'Preview: gifts are still charged at checkout until the Shopify discounts are set up.',
-      solidNote: 'Preview: not in the online store yet.'
+      solidNote: 'Preview: no stock at the online shipping location yet.'
     },
     ja: {
-      start: '香水2本で、練り香水をプレゼント',
+      begin: (count, gift) => `香水${count}本で、${gift}をプレゼント`,
       more: (count, gift) => `あと${count}本で、${gift}をプレゼント`,
-      complete: '3つのギフトすべてをお贈りします',
+      complete: 'すべてのギフトをお贈りします',
       rail: { solid: ['練り香水'], small: ['香水 9mL'], large: ['香水 30mL'] },
       names: { solid: '練り香水', small: '香水 9mL', large: '香水 30mL' },
       inline: { solid: '練り香水', small: '香水 9mL', large: '香水 30mL' },
@@ -146,24 +152,23 @@
       inCart: 'カートに追加済み',
       terms: 'サイズを問わず対象・ギフトは重ねてお受け取りいただけます。1回のご注文につき1セット・なくなり次第終了。',
       see: 'ギフトを見る',
-      previewNote: 'プレビュー：Shopifyの割引設定が完了するまで、ギフトはチェックアウトで課金されます。',
-      solidNote: 'プレビュー：オンラインストアには未登録です。'
+      solidNote: 'プレビュー：オンライン出荷拠点に在庫がありません。'
     }
   };
 
-  const CART_FIELDS = 'id lines(first: 50) { edges { node { id quantity attributes { key value } merchandise { ... on ProductVariant { id sku } } } } }';
+  const CART_FIELDS = 'id lines(first: 50) { edges { node { id quantity attributes { key value } cost { totalAmount { amount } } merchandise { ... on ProductVariant { id sku } } } } }';
 
   const QUERIES = {
     cart: `query($id: ID!) { cart(id: $id) { ${CART_FIELDS} } }`,
     add: `mutation($id: ID!, $lines: [CartLineInput!]!) { cartLinesAdd(cartId: $id, lines: $lines) { cart { ${CART_FIELDS} } } }`,
     update: `mutation($id: ID!, $lines: [CartLineUpdateInput!]!) { cartLinesUpdate(cartId: $id, lines: $lines) { cart { ${CART_FIELDS} } } }`,
     remove: `mutation($id: ID!, $lineIds: [ID!]!) { cartLinesRemove(cartId: $id, lineIds: $lineIds) { cart { ${CART_FIELDS} } } }`,
-    search: 'query($query: String!) { search(query: $query, first: 5, types: PRODUCT) { edges { node { ... on Product { variants(first: 10) { edges { node { id sku availableForSale } } } } } } } }'
+    gifts: `query($query: String!) { products(first: ${CATALOG_LIMIT}, query: $query) { edges { node { title variants(first: 10) { edges { node { id sku availableForSale price { amount } image { url } } } } } } } }`
   };
 
   const copy = COPY[JA_PATH_PATTERN.test(window.location.pathname) ? 'ja' : 'en'];
   const reducedMotion = window.matchMedia(REDUCED_MOTION_QUERY);
-  const state = { ready: false, busy: false, lines: [], gifts: {}, solid: null, failed: new Set(), loading: '', hostTotal: 0, lastPaid: null, queue: [], popup: null, pick: '', returnFocus: null, scrollLocked: false, resumeScroll: false, messageHtml: '', expect: { present: [], absent: [] }, waiters: [] };
+  const state = { ready: false, busy: false, lines: [], gifts: {}, charged: [], blocked: new Set(), catalog: { solid: null, small: [], large: [] }, signature: '', snapshotPaid: 0, failed: new Set(), loading: '', hostTotal: 0, lastPaid: null, queue: [], popup: null, pick: '', returnFocus: null, scrollLocked: false, resumeScroll: false, messageHtml: '', expect: { present: [], absent: [] }, waiters: [] };
   const refs = {};
 
   const css = `
@@ -187,7 +192,8 @@
     .bfg-point.${DONE_CLASS} .bfg-point__icon{opacity:1}
     .bfg-point__label{position:absolute;top:${POINT_SIZE + 6}px;left:50%;transform:translateX(-50%);white-space:nowrap;font:400 12px/1.3 ${FONTS.text};color:${COLORS.ink};opacity:.55;transition:opacity .4s .25s}
     .bfg-point.${DONE_CLASS} .bfg-point__label{opacity:1}
-    .bfg-point:last-child .bfg-point__label{left:auto;right:0;transform:none;text-align:right}
+    .bfg-point[hidden]{display:none}
+    .bfg-point.${LAST_CLASS} .bfg-point__label{left:auto;right:0;transform:none;text-align:right}
     .cart-line.${LINE_CLASS}{cursor:pointer}
     .${LINE_CLASS} .cart-line-price{white-space:nowrap;padding-left:.75rem}
     .${LINE_CLASS} .bfg-gift-img{min-height:${LINE_IMAGE_HEIGHT}px;object-fit:contain;padding:22px;box-sizing:border-box;background:${COLORS.wash}}
@@ -195,7 +201,6 @@
     .bfg-was{margin-right:.6em;opacity:.5}
     .bfg-free{color:${COLORS.terra}}
     .bfg-tag{font-size:14px;opacity:.6}
-    .bfg-note{margin:0;padding:1rem 0 0;font-size:11px;line-height:1.6;opacity:.6}
     .bfg-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 24px}
     .bfg-option{all:unset;box-sizing:border-box;position:relative;display:flex;align-items:center;gap:12px;min-width:0;padding:8px ${MARK_SIZE + 20}px 8px 8px;border:1px solid ${COLORS.track};cursor:pointer;transition:border-color .3s,background-color .3s}
     .bfg-option:hover{border-color:${COLORS.hover}}
@@ -322,21 +327,32 @@
 
   const giftAttributes = (key) => [{ key: GIFT_ATTRIBUTE, value: key }];
 
+  const signatureOf = (items) => items.map((item) => `${item.id}:${item.quantity}`).sort().join('|');
+
   const snapshotGifts = (cart) => {
     const gifts = [];
     if (!cart) return gifts;
     cart.lines.edges.forEach(({ node }) => {
       const attribute = node.attributes.find((item) => item.key === GIFT_ATTRIBUTE);
-      if (attribute) gifts.push({ lineId: node.id, key: attribute.value, variantId: node.merchandise.id });
+      if (attribute) gifts.push({ lineId: node.id, key: attribute.value, variantId: node.merchandise.id, charged: Number(node.cost.totalAmount.amount) > 0 });
     });
     return gifts;
   };
 
   const adopt = (cart) => {
+    const nodes = cart ? cart.lines.edges.map(({ node }) => node) : [];
     state.gifts = {};
+    state.charged = [];
     snapshotGifts(cart).forEach((gift) => {
       state.gifts[gift.lineId] = gift.key;
+      if (gift.charged) state.charged.push(gift.key);
     });
+    state.signature = signatureOf(nodes);
+    state.snapshotPaid = nodes.filter((node) => !state.gifts[node.id] && PAID_SKU_PATTERN.test(node.merchandise.sku || '')).reduce((sum, node) => sum + node.quantity, 0);
+  };
+
+  const block = () => {
+    state.charged.filter((key) => tierOf(key) && state.snapshotPaid >= tierOf(key).buy).forEach((key) => state.blocked.add(key));
   };
 
   const readLines = () => [...refs.list.querySelectorAll(SELECTORS.line)].map((node) => {
@@ -351,7 +367,7 @@
       html: node.innerHTML,
       className: node.className,
       id: match ? match[1] : '',
-      name: title ? title.textContent.replace(TITLE_PREFIX_PATTERN, '').trim() : '',
+      name: title ? title.textContent.replace(TITLE_PREFIX_PATTERN, '').replace(GIFT_TITLE_PATTERN, '').trim() : '',
       quantity: Number(quantity && quantity.textContent) || 1,
       sku: sku ? sku.textContent.trim() : '',
       price: parseYen(price && price.textContent)
@@ -362,25 +378,36 @@
 
   const giftLines = (key) => state.lines.filter((line) => state.gifts[line.id] === key);
 
-  const giftValue = () => state.lines.filter((line) => state.gifts[line.id]).reduce((sum, line) => sum + line.price * line.quantity, 0);
 
-  const subtotal = () => (state.lines.length ? Math.max(0, state.hostTotal - (PREVIEW_ASSUMES_FREE ? giftValue() : 0)) : 0);
+  const subtotal = () => (state.lines.length ? state.hostTotal : 0);
 
-  const options = (tier) => {
-    if (!tier.choice || typeof window.getProduct !== 'function') return [];
+  const shelf = () => {
+    const stock = {};
+    if (typeof window.getProduct !== 'function') return stock;
     const handles = [...new Set([...document.querySelectorAll(SELECTORS.product)].map((node) => node.dataset.shopifyHandle).filter(Boolean))];
-    return handles.map((handle) => {
+    handles.forEach((handle, order) => {
       const product = window.getProduct(handle);
-      const variant = product && product.variants.find((item) => tier.skuPattern.test(item.sku));
-      if (!variant || !variant.available || state.failed.has(variant.id)) return null;
-      return { variantId: variant.id, sku: variant.sku, price: Number(variant.price) || 0, name: product.title.replace(TITLE_PREFIX_PATTERN, ''), image: variant.image || product.image };
-    }).filter(Boolean);
+      if (product) product.variants.forEach((variant) => {
+        stock[variant.sku] = { available: variant.available, order };
+      });
+    });
+    return stock;
   };
 
-  const offered = (tier) => (tier.choice ? options(tier).length > 0 : Boolean(state.solid) || PREVIEW_ASSUMES_FREE);
+  const options = (tier) => {
+    if (!tier.choice) return [];
+    const stock = shelf();
+    return state.catalog[tier.key].filter((item) => item.available && !state.failed.has(item.variantId) && stock[item.base] && stock[item.base].available).sort((a, b) => stock[a.base].order - stock[b.base].order);
+  };
+
+  const offered = (tier) => {
+    if (state.blocked.has(tier.key)) return false;
+    if (tier.choice) return options(tier).length > 0;
+    return Boolean(state.catalog.solid) && (state.catalog.solid.available || PREVIEW_SHOWS_UNAVAILABLE);
+  };
 
   const wanted = (tier) => {
-    if (!tier.choice) return state.solid ? { variantId: state.solid.variantId, sku: tier.sku } : null;
+    if (!tier.choice) return state.catalog.solid && state.catalog.solid.available ? state.catalog.solid : null;
     const choice = readStore().choices[tier.key];
     return options(tier).find((option) => option.variantId === choice) || null;
   };
@@ -390,7 +417,7 @@
     const actions = [];
     TIERS.forEach((tier) => {
       const lines = giftLines(tier.key);
-      if (paid < tier.buy) {
+      if (paid < tier.buy || state.blocked.has(tier.key)) {
         lines.forEach((line) => actions.push({ type: 'remove', lineId: line.id }));
         return;
       }
@@ -433,8 +460,8 @@
       if (action.tier.choice) {
         state.failed.add(action.variantId);
         setChoice(action.tier.key, '');
-      } else {
-        state.solid = false;
+      } else if (state.catalog.solid) {
+        state.catalog.solid.available = false;
       }
     });
     state.expect = { present: gifts.map((gift) => gift.lineId), absent: actions.filter((action) => action.type === 'remove').map((action) => action.lineId) };
@@ -463,12 +490,14 @@
     return remain ? i18n.freeShipRemain(remain) : i18n.freeShipDone;
   };
 
-  const openChoice = (paid) => TIERS.find((tier) => tier.choice && paid >= tier.buy && !giftLines(tier.key).length && offered(tier));
+  const activeTiers = () => TIERS.filter(offered);
+
+  const openChoice = (paid) => activeTiers().find((tier) => tier.choice && paid >= tier.buy && !giftLines(tier.key).length);
 
   const nextMessage = (paid) => {
-    const next = TIERS.find((tier) => paid < tier.buy);
+    const next = activeTiers().find((tier) => paid < tier.buy);
     if (!next) return '';
-    return paid ? copy.more(next.buy - paid, copy.inline[next.key]) : copy.start;
+    return paid ? copy.more(next.buy - paid, copy.inline[next.key]) : copy.begin(next.buy, copy.inline[next.key]);
   };
 
   const message = (paid) => {
@@ -478,9 +507,19 @@
   };
 
   const paintProgress = (paid) => {
-    const goal = TIERS[TIERS.length - 1].buy;
-    refs.fill.style.width = `${Math.min(1, paid / goal) * 100}%`;
-    TIERS.forEach((tier) => refs.points[tier.key].classList.toggle(DONE_CLASS, paid >= tier.buy));
+    const tiers = activeTiers();
+    refs.progress.hidden = !tiers.length;
+    refs.shipping.classList.toggle(OFF_CLASS, tiers.length > 0);
+    if (!tiers.length) return;
+    const last = tiers[tiers.length - 1];
+    refs.fill.style.width = `${Math.min(1, paid / last.buy) * 100}%`;
+    TIERS.forEach((tier) => {
+      const point = refs.points[tier.key];
+      point.hidden = !tiers.includes(tier);
+      point.style.left = `${Math.min(1, tier.buy / last.buy) * 100}%`;
+      point.classList.toggle(LAST_CLASS, tier === last);
+      point.classList.toggle(DONE_CLASS, paid >= tier.buy);
+    });
     refs.ship.textContent = shippingMessage();
     const html = message(paid);
     if (state.messageHtml === html) return;
@@ -497,6 +536,11 @@
     node.innerHTML = line.html;
     node.className = `${line.className} ${LINE_CLASS}`;
     node.setAttribute('data-bfg-overview', SOURCES.line);
+    const title = node.querySelector(SELECTORS.lineTitle);
+    if (title) title.textContent = tier.choice ? title.textContent.replace(GIFT_TITLE_PATTERN, '') : copy.names[tier.key];
+    const style = node.querySelector(SELECTORS.lineStyle);
+    if (style && !tier.choice) style.textContent = line.name;
+    if (!node.querySelector(SELECTORS.lineImage)) node.insertAdjacentHTML('afterbegin', `<img class="cart-line-img bfg-gift-img" src="${GIFT_IMAGES[tier.key]}" alt="">`);
     const price = node.querySelector(SELECTORS.linePrice);
     if (price) price.innerHTML = priceHtml(line.price);
     const slot = node.querySelector(SELECTORS.lineControls);
@@ -506,7 +550,7 @@
   };
 
   const placeholder = (tier) => {
-    const sample = options(tier)[0];
+    const sample = tier.choice ? options(tier)[0] : state.catalog.solid;
     const detail = tier.choice ? `<p class="cart-line-purfume-style">${copy.style}</p><p class="cart-line-variant"><span>${copy.pending}</span></p>` : `<p class="cart-line-purfume-style">${copy.solidNote}</p>`;
     const node = element('div', `${NODE_CLASS} cart-line ${LINE_CLASS}`, `<img class="cart-line-img bfg-gift-img" src="${GIFT_IMAGES[tier.key]}" alt=""><div class="cart-line-info"><div class="cart-line-info-wrapper"><div class="cart-line-title-and-price"><p class="cart-line-title">${copy.names[tier.key]}</p><p class="cart-line-price">${priceHtml(sample ? sample.price : 0)}</p></div>${detail}</div><div class="cart-line-qty">${controls(tier, copy.pick)}</div></div>`);
     node.setAttribute('data-bfg-overview', SOURCES.line);
@@ -514,25 +558,18 @@
     return node;
   };
 
+  const pendingStock = (tier) => PREVIEW_SHOWS_UNAVAILABLE && !tier.choice && offered(tier) && !state.catalog.solid.available;
+
   const paintLines = (paid) => {
     refs.list.querySelectorAll(`.${NODE_CLASS}`).forEach((node) => node.remove());
     state.lines.filter((line) => state.gifts[line.id]).forEach((line) => line.el.remove());
-    const nodes = [];
     TIERS.filter((tier) => paid >= tier.buy).forEach((tier) => {
       const line = giftLines(tier.key)[0];
-      if (line) nodes.push(decorate(line, tier));
-      else if (tier.choice ? offered(tier) : PREVIEW_ASSUMES_FREE && state.solid === false) nodes.push(placeholder(tier));
+      if (line) refs.list.appendChild(decorate(line, tier));
+      else if (tier.choice ? offered(tier) : pendingStock(tier)) refs.list.appendChild(placeholder(tier));
     });
-    if (!nodes.length) return;
-    nodes.forEach((node) => refs.list.appendChild(node));
-    if (PREVIEW_ASSUMES_FREE) refs.list.appendChild(element('p', `${NODE_CLASS} bfg-note`, copy.previewNote));
   };
 
-  const paintTotal = () => {
-    if (!PREVIEW_ASSUMES_FREE || !giftValue()) return;
-    const total = document.querySelector(SELECTORS.total);
-    if (total) total.textContent = yen(subtotal());
-  };
 
   const observe = () => {
     refs.observer.observe(refs.list, { childList: true });
@@ -544,7 +581,6 @@
     const paid = paidCount();
     refs.observer.disconnect();
     paintLines(paid);
-    paintTotal();
     paintProgress(paid);
     observe();
   };
@@ -656,14 +692,24 @@
     if (!state.ready || state.busy) return;
     state.busy = true;
     try {
+      let audited = false;
       for (let round = 0; round < MAX_ROUNDS; round += 1) {
         const actions = plan();
-        if (!actions.length) break;
-        const cart = await apply(actions);
-        if (!cart) break;
-        adopt(cart);
-        verify(actions, cart);
-        await refreshHost();
+        if (actions.length) {
+          const cart = await apply(actions);
+          if (!cart) break;
+          adopt(cart);
+          verify(actions, cart);
+          block();
+          audited = false;
+          await refreshHost();
+        } else if (!audited && state.signature !== signatureOf(state.lines)) {
+          adopt(await loadCart());
+          block();
+          audited = true;
+        } else {
+          break;
+        }
       }
     } catch (error) {
       window.console.warn(LOG_LABEL, error);
@@ -757,11 +803,10 @@
   };
 
   const buildProgress = () => {
-    const goal = TIERS[TIERS.length - 1].buy;
-    const points = TIERS.map((tier) => `<li class="bfg-point" data-bfg-point="${tier.key}" style="left:${(tier.buy / goal) * 100}%">${GIFT_ICON}<span class="bfg-point__label">${railLabel(tier.key)}</span></li>`).join('');
+    const points = TIERS.map((tier) => `<li class="bfg-point" data-bfg-point="${tier.key}">${GIFT_ICON}<span class="bfg-point__label">${railLabel(tier.key)}</span></li>`).join('');
     const node = element('div', 'bfg-progress', `<div class="bfg-progress__head"><p class="bfg-progress__msg" aria-live="polite"></p><p class="bfg-progress__ship"></p></div><div class="bfg-bar" role="button" tabindex="0" data-bfg-overview="${SOURCES.bar}" aria-label="${copy.see}"><span class="bfg-bar__track" aria-hidden="true"></span><span class="bfg-bar__fill" aria-hidden="true"></span><ol class="bfg-points">${points}</ol></div>`);
-    refs.shipping.classList.add(OFF_CLASS);
     refs.shipping.insertAdjacentElement('afterend', node);
+    refs.progress = node;
     refs.message = node.querySelector('.bfg-progress__msg');
     refs.fill = node.querySelector('.bfg-bar__fill');
     refs.ship = node.querySelector('.bfg-progress__ship');
@@ -788,14 +833,19 @@
     return id ? request(QUERIES.cart, { id }).then((data) => data.cart || null) : Promise.resolve(null);
   };
 
-  const findSolid = () => {
-    const tier = TIERS.find((item) => !item.choice);
-    return request(QUERIES.search, { query: tier.sku }).then((data) => {
-      const variants = ((data.search || {}).edges || []).flatMap((edge) => ((edge.node.variants || {}).edges || []).map((item) => item.node));
-      const variant = variants.find((item) => item.sku === tier.sku && item.availableForSale);
-      return variant ? { variantId: variant.id } : false;
+  const loadCatalog = () => request(QUERIES.gifts, { query: `tag:${GIFT_TAG}` }).then((data) => {
+    const catalog = { solid: null, small: [], large: [] };
+    ((data.products || {}).edges || []).forEach(({ node }) => {
+      node.variants.edges.forEach(({ node: variant }) => {
+        const tier = TIERS.find((item) => item.skuPattern.test(variant.sku || ''));
+        if (!tier) return;
+        const item = { variantId: variant.id, sku: variant.sku, base: variant.sku.replace(GIFT_SKU_PREFIX, ''), price: Number(variant.price.amount) || 0, available: variant.availableForSale, name: node.title.replace(TITLE_PREFIX_PATTERN, '').replace(GIFT_TITLE_PATTERN, ''), image: variant.image ? variant.image.url : '' };
+        if (tier.choice) catalog[tier.key].push(item);
+        else catalog[tier.key] = item;
+      });
     });
-  };
+    return catalog;
+  });
 
   const start = async () => {
     refs.list = document.querySelector(SELECTORS.list);
@@ -813,12 +863,11 @@
     document.addEventListener('keydown', onKeydown, true);
     window.addEventListener('shopify-products-ready', onProductsReady);
     try {
-      const [cart, solid] = await Promise.all([loadCart(), findSolid().catch(() => false)]);
+      const [cart, catalog] = await Promise.all([loadCart(), loadCatalog()]);
       adopt(cart);
-      state.solid = solid;
+      state.catalog = catalog;
     } catch (error) {
       window.console.warn(LOG_LABEL, error);
-      state.solid = false;
     }
     state.ready = true;
     onHostRender();
