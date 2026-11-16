@@ -23,6 +23,7 @@
   const POINT_SIZE = 22;
   const TRACK_HEIGHT = 3;
   const LABEL_WIDTH = 60;
+  const ICON_SIZE = 12;
   const MOBILE_QUERY = '(max-width: 767px)';
   const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
   const Z_INDEX = { popup: 10010 };
@@ -52,6 +53,8 @@
     small: 'https://cdn.prod.website-files.com/694de20134d7a4afc6818bdd/6af16afa434edee758053e8e_yokai-bf2026-gift-9ml-alpha.webp',
     large: 'https://cdn.prod.website-files.com/694de20134d7a4afc6818bdd/6af16afa84e7ff9e17c2e3fe_yokai-bf2026-gift-30ml-alpha.webp'
   };
+
+  const GIFT_ICON = `<svg class="bfg-point__icon" viewBox="0 0 12 12" width="${ICON_SIZE}" height="${ICON_SIZE}" fill="none" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.6 5.4h8.8v5H1.6zM1 3.6h10v1.8H1zM6 3.6v6.8M6 3.6C5.4 1.9 3.5 1.6 3.3 2.6 3.1 3.5 4.6 3.7 6 3.6ZM6 3.6c.6-1.7 2.5-2 2.7-1 .2.9-1.3 1.1-2.7 1Z"/></svg>`;
 
   const TIERS = [
     { key: 'solid', buy: 2, sku: 'SP001', choice: false },
@@ -148,8 +151,10 @@
     .bfg-bar__track,.bfg-bar__fill{position:absolute;top:50%;left:0;height:${TRACK_HEIGHT}px;margin-top:-${TRACK_HEIGHT / 2}px}
     .bfg-bar__track{right:0;background:${COLORS.track}}
     .bfg-bar__fill{width:0;background:${COLORS.ink};transition:width .7s ${EASE_OUT}}
-    .bfg-point{position:absolute;top:0;box-sizing:border-box;width:${POINT_SIZE}px;height:${POINT_SIZE}px;margin:0 0 0 -${POINT_SIZE / 2}px;padding:0;border:1px solid ${COLORS.hover};border-radius:50%;background:${COLORS.cream};color:${COLORS.ink};font:400 11px/${POINT_SIZE - 2}px ${FONTS.text};text-align:center;transition:background-color .4s .25s,border-color .4s .25s,color .4s .25s}
+    .bfg-point{position:absolute;top:0;box-sizing:border-box;display:flex;align-items:center;justify-content:center;width:${POINT_SIZE}px;height:${POINT_SIZE}px;margin:0 0 0 -${POINT_SIZE / 2}px;padding:0;border:1px solid ${COLORS.hover};border-radius:50%;background:${COLORS.cream};color:${COLORS.ink};transition:background-color .4s .25s,border-color .4s .25s,color .4s .25s}
     .bfg-point.${DONE_CLASS}{border-color:${COLORS.ink};background:${COLORS.ink};color:${COLORS.cream}}
+    .bfg-point__icon{display:block;flex:none;opacity:.6;transition:opacity .4s .25s}
+    .bfg-point.${DONE_CLASS} .bfg-point__icon{opacity:1}
     .bfg-point__label{position:absolute;top:${POINT_SIZE + 6}px;left:50%;transform:translateX(-50%);white-space:nowrap;font:400 12px/1.3 ${FONTS.text};color:${COLORS.ink};opacity:.55;transition:opacity .4s .25s}
     .bfg-point.${DONE_CLASS} .bfg-point__label{opacity:1}
     .bfg-point:last-child .bfg-point__label{left:auto;right:0;transform:none;text-align:right}
@@ -654,7 +659,7 @@
 
   const buildProgress = () => {
     const goal = TIERS[TIERS.length - 1].buy;
-    const points = TIERS.map((tier) => `<li class="bfg-point" data-bfg-point="${tier.key}" style="left:${(tier.buy / goal) * 100}%">${tier.buy}<span class="bfg-point__label">${railLabel(tier.key)}</span></li>`).join('');
+    const points = TIERS.map((tier) => `<li class="bfg-point" data-bfg-point="${tier.key}" style="left:${(tier.buy / goal) * 100}%">${GIFT_ICON}<span class="bfg-point__label">${railLabel(tier.key)}</span></li>`).join('');
     const node = element('div', 'bfg-progress', `<p class="bfg-progress__msg" aria-live="polite"></p><div class="bfg-bar"><span class="bfg-bar__track" aria-hidden="true"></span><span class="bfg-bar__fill" aria-hidden="true"></span><ol class="bfg-points">${points}</ol></div><p class="bfg-progress__ship"></p>`);
     refs.shipping.classList.add(OFF_CLASS);
     refs.shipping.insertAdjacentElement('afterend', node);
