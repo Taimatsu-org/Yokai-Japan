@@ -114,7 +114,7 @@
       names: { solid: '練り香水', small: '香水 9mL', large: '香水 30mL' },
       inline: { solid: '練り香水', small: '香水 9mL', large: '香水 30mL' },
       choose: { small: 'ギフトの香水 9mL を選ぶ', large: 'ギフトの香水 30mL を選ぶ' },
-      unlocked: { solid: '練り香水をプレゼントいたします', small: '香水 9mL をプレゼントいたします', large: '香水 30mL をプレゼントいたします' },
+      unlocked: { solid: '練り香水をプレゼント', small: '香水 9mL をプレゼント', large: '香水 30mL をプレゼント' },
       added: 'カートに追加しました。',
       pickLead: 'お好きな香りをお選びください。カート内で変更できます。',
       pending: '香りをお選びください',
@@ -178,18 +178,19 @@
     .bfg-option:focus-visible{outline:1px solid ${COLORS.ink};outline-offset:2px}
     .bfg-option img{flex:none;width:48px;height:60px;object-fit:cover}
     .bfg-option span{min-width:0;font:400 14px/1.3 ${FONTS.title}}
-    .bfg-pop{position:fixed;inset:0;z-index:${Z_INDEX.popup};display:flex;align-items:center;justify-content:center;visibility:hidden;pointer-events:none}
+    .bfg-pop{--bfg-card-width:${CARD_WIDTH.notice}px;position:fixed;inset:0;z-index:${Z_INDEX.popup};display:flex;align-items:center;justify-content:center;visibility:hidden;pointer-events:none}
     .bfg-pop.${VISIBLE_CLASS}{visibility:visible}
     .bfg-pop.${OPEN_CLASS}{pointer-events:auto}
     .bfg-pop__backdrop{position:absolute;inset:0;background:${COLORS.backdrop};opacity:0;touch-action:none;transition:opacity ${DURATION.backdrop}ms ${EASE_OUT}}
     .bfg-pop.${OPEN_CLASS} .bfg-pop__backdrop{opacity:1}
-    .bfg-pop__card{position:relative;display:flex;width:min(${CARD_WIDTH.notice}px,calc(100vw - 48px));max-height:calc(100vh - 64px);max-height:calc(100dvh - 64px);background:${COLORS.cream} var(--bfg-texture,none) center/cover;color:${COLORS.ink};opacity:0;transform:translateY(24px);transition:opacity ${DURATION.card}ms ${EASE_OUT},transform ${DURATION.card}ms ${EASE_OUT};outline:none}
-    .bfg-pop.${CHOICE_CLASS} .bfg-pop__card{width:min(${CARD_WIDTH.choice}px,calc(100vw - 48px))}
+    .bfg-pop__card{position:relative;display:flex;width:min(var(--bfg-card-width),calc(100vw - 48px));max-height:calc(100vh - 64px);max-height:calc(100dvh - 64px);background:${COLORS.cream} var(--bfg-texture,none) center/cover;color:${COLORS.ink};opacity:0;transform:translateY(24px);transition:opacity ${DURATION.card}ms ${EASE_OUT},transform ${DURATION.card}ms ${EASE_OUT};outline:none}
+    .bfg-pop.${CHOICE_CLASS}{--bfg-card-width:${CARD_WIDTH.choice}px}
     .bfg-pop.${OPEN_CLASS} .bfg-pop__card{opacity:1;transform:none}
     .bfg-pop:not(.${OPEN_CLASS}) .bfg-pop__card,.bfg-pop:not(.${OPEN_CLASS}) .bfg-pop__backdrop{transition-duration:${DURATION.close}ms;transition-timing-function:${EASE_IN}}
     .bfg-pop__scroll{box-sizing:border-box;width:100%;padding:44px 40px 36px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
     .bfg-pop__eyebrow{margin:0 0 12px;padding-right:${CLOSE_CLEARANCE}px;font:400 11px/1 ${FONTS.text};letter-spacing:.24em;color:${COLORS.terra}}
     .bfg-pop__title{margin:0 0 14px;padding-right:${CLOSE_CLEARANCE}px;font:400 26px/1.2 ${FONTS.title};letter-spacing:.02em;color:${COLORS.ink}}
+    .bfg-pop__title,.bfg-pop__lead{word-break:keep-all;overflow-wrap:anywhere}
     .bfg-pop__lead{margin:0 0 20px;font:400 13px/1.8 ${FONTS.text};letter-spacing:.04em}
     .bfg-pop__gift{display:flex;align-items:center;gap:20px;margin:0 0 26px}
     .bfg-pop__gift img{flex:none;width:88px;height:88px;object-fit:contain}
