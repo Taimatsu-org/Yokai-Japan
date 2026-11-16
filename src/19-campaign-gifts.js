@@ -17,6 +17,7 @@
   const GIFT_TAG = 'bf2026-gift';
   const GIFT_SKU_PREFIX = 'GIFT-';
   const GIFT_TITLE_PATTERN = /\s*\(Gift\)\s*$/i;
+  const DEFAULT_VARIANT_TITLE = 'Default Title';
   const CATALOG_LIMIT = 30;
   const MAX_ROUNDS = 6;
   const HOST_POLL_INTERVAL = 250;
@@ -79,6 +80,8 @@
     lineTitle: '.cart-line-title',
     lineStyle: '.cart-line-purfume-style',
     lineImage: '.cart-line-img',
+    lineVariant: '.cart-line-variant',
+    lineSeparator: '.cart-line-variant-sep',
     lineRemove: '.cart-line-remove',
     lineQuantity: '.cart-line-qty-selector span',
     lineSku: '.cart-line-variant span:last-child',
@@ -546,6 +549,12 @@
     if (title) title.textContent = tier.choice ? title.textContent.replace(GIFT_TITLE_PATTERN, '') : copy.names[tier.key];
     const style = node.querySelector(SELECTORS.lineStyle);
     if (style && !tier.choice) style.textContent = line.name;
+    const variant = node.querySelector(SELECTORS.lineVariant);
+    [...(variant ? variant.children : [])].filter((part) => part.textContent.trim() === DEFAULT_VARIANT_TITLE).forEach((part) => {
+      const next = part.nextElementSibling;
+      if (next && next.matches(SELECTORS.lineSeparator)) next.remove();
+      part.remove();
+    });
     if (!node.querySelector(SELECTORS.lineImage)) node.insertAdjacentHTML('afterbegin', `<img class="cart-line-img bfg-gift-img" src="${GIFT_IMAGES[tier.key]}" alt="">`);
     const price = node.querySelector(SELECTORS.linePrice);
     if (price) price.innerHTML = priceHtml(line.price);
