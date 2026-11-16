@@ -376,7 +376,12 @@
 
   const paidCount = () => state.lines.filter((line) => !state.gifts[line.id] && PAID_SKU_PATTERN.test(line.sku)).reduce((sum, line) => sum + line.quantity, 0);
 
-  const giftLines = (key) => state.lines.filter((line) => state.gifts[line.id] === key);
+  const validGift = (line) => {
+    const tier = tierOf(state.gifts[line.id]);
+    return Boolean(tier) && tier.skuPattern.test(line.sku);
+  };
+
+  const giftLines = (key) => state.lines.filter((line) => state.gifts[line.id] === key && validGift(line));
 
 
   const subtotal = () => (state.lines.length ? state.hostTotal : 0);
@@ -415,6 +420,7 @@
   const plan = () => {
     const paid = paidCount();
     const actions = [];
+    state.lines.filter((line) => state.gifts[line.id] && !validGift(line)).forEach((line) => actions.push({ type: 'remove', lineId: line.id }));
     TIERS.forEach((tier) => {
       const lines = giftLines(tier.key);
       if (paid < tier.buy || state.blocked.has(tier.key)) {
@@ -865,6 +871,7 @@
     try {
       const [cart, catalog] = await Promise.all([loadCart(), loadCatalog()]);
       adopt(cart);
+      block();
       state.catalog = catalog;
     } catch (error) {
       window.console.warn(LOG_LABEL, error);
