@@ -82,7 +82,7 @@
       barMore: 'See the gifts',
       lead: 'Buy perfume online or at our stores and receive a gift, depending on how many you buy.',
       gifts: [
-        { buy: 'Buy 2 perfumes', name: 'Free <span class="bf-pop__gift-item">solid perfume</span>', mark: '*', image: 'solid', compact: true },
+        { buy: 'Buy 2 perfumes', name: 'Free <span class="bf-pop__gift-item">solid perfume<span class="bf-pop__gift-mark">*</span></span>', image: 'solid', compact: true },
         { buy: 'Buy 3 perfumes', name: 'Free <span class="bf-pop__gift-item">9 mL perfume</span>', image: 'small', compact: false },
         { buy: 'Buy 5 perfumes', name: 'Free <span class="bf-pop__gift-item">30 mL perfume</span>', image: 'large', compact: false }
       ],
