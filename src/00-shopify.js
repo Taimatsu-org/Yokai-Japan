@@ -11,6 +11,8 @@
         remove: "削除",
         addToCart: "カートに入れる",
         soldOut: "売り切れ",
+        decrease: "数量を減らす",
+        increase: "数量を増やす",
         freeShipRemain: function (r) {
           return "あと" + yen(r) + "で送料無料";
         },
@@ -20,6 +22,8 @@
         remove: "REMOVE",
         addToCart: "Add To Cart",
         soldOut: "SOLD OUT",
+        decrease: "Decrease quantity",
+        increase: "Increase quantity",
         freeShipRemain: function (r) {
           return yen(r) + " away from free shipping";
         },
@@ -167,9 +171,9 @@
             </div>
             <div class="cart-line-qty">
                 <div class='cart-line-qty-selector'>
-                    <button onclick="Cart.setQty('${n.id}', ${n.quantity - 1})" class='cart-line-qty-selector-minus'></button>
+                    <button onclick="Cart.setQty('${n.id}', ${n.quantity - 1})" class='cart-line-qty-selector-minus' aria-label="${T.decrease}"></button>
                         <span>${n.quantity}</span>
-                    <button onclick="Cart.setQty('${n.id}', ${n.quantity + 1})" class='cart-line-qty-selector-plus'></button>
+                    <button onclick="Cart.setQty('${n.id}', ${n.quantity + 1})" class='cart-line-qty-selector-plus' aria-label="${T.increase}"></button>
                 </div>
                 <button class="cart-line-remove" onclick="Cart.remove('${n.id}')">${T.remove}</button>
             </div>
@@ -196,11 +200,13 @@
             `mutation($c:ID!,$l:[CartLineInput!]!){cartLinesAdd(cartId:$c,lines:$l){cart{${CART_FIELDS}}}}`,
             { c: id, l: [{ merchandiseId: variantId, quantity: 1 }] },
           ).then(function (d) {
-            return d?.data?.cartLinesAdd?.cart;
+            if (!d?.data) return undefined;
+            return d.data.cartLinesAdd?.cart || null;
           })
         : Promise.resolve(null);
 
       p.then(function (c) {
+        if (c === undefined) return;
         if (c) {
           save(c);
           self.open();
@@ -226,7 +232,8 @@
         `mutation($c:ID!,$l:[CartLineUpdateInput!]!){cartLinesUpdate(cartId:$c,lines:$l){cart{${CART_FIELDS}}}}`,
         { c: id, l: [{ id: lineId, quantity: q }] },
       ).then(function (d) {
-        save(d?.data?.cartLinesUpdate?.cart);
+        var next = d?.data?.cartLinesUpdate?.cart;
+        if (next) save(next);
       });
     },
     remove: function (lineId) {
@@ -235,7 +242,8 @@
         `mutation($c:ID!,$l:[ID!]!){cartLinesRemove(cartId:$c,lineIds:$l){cart{${CART_FIELDS}}}}`,
         { c: id, l: [lineId] },
       ).then(function (d) {
-        save(d?.data?.cartLinesRemove?.cart);
+        var next = d?.data?.cartLinesRemove?.cart;
+        if (next) save(next);
       });
     },
     open: function () {
@@ -252,7 +260,8 @@
       if (!id) return render();
       gql(`query($c:ID!){cart(id:$c){${CART_FIELDS}}}`, { c: id }).then(
         function (d) {
-          save(d?.data?.cart || null);
+          if (!d?.data) return;
+          save(d.data.cart || null);
         },
       );
     },
