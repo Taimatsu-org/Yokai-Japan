@@ -30,6 +30,8 @@
   const COLORS = { terra: '#B15A3D', terraSmall: '#A5512F', wine: '#7A3036', cream: '#F5EFE1', ink: '#1E1C20', backdrop: 'rgba(20, 16, 18, 0.5)', rule: 'rgba(30, 28, 32, 0.12)', handle: 'rgba(30, 28, 32, 0.35)' };
   const FONTS = { title: "Optima, 'Palatino Linotype', sans-serif", text: 'ibm-plex-sans-jp, sans-serif' };
   const TRACK_EVENT = 'yokai_campaign';
+  const TRACK_PARAMS = { campaign: 'yokai_campaign_id', source: 'yokai_source' };
+  const TRACK_ACTIONS = { auto: 'popup_auto', open: 'popup_open', close: 'popup_close' };
   const TRACK_ID_PATTERN = /^G-/;
   const TRACK_RETRY_INTERVAL = 500;
   const TRACK_RETRY_LIMIT = 40;
@@ -197,7 +199,7 @@
     const send = function () {
       window.dataLayer.push(arguments);
     };
-    tracking.queue.splice(0).forEach((item) => send('event', item.name, { campaign: CAMPAIGN_ID, campaign_source: item.source, send_to: targets }));
+    tracking.queue.splice(0).forEach((item) => send('event', item.name, { [TRACK_PARAMS.campaign]: CAMPAIGN_ID, [TRACK_PARAMS.source]: item.source, send_to: targets }));
   };
 
   const track = (action, source) => {
@@ -270,7 +272,7 @@
     window.requestAnimationFrame(() => refs.popup.classList.add(OPEN_CLASS));
     lockScroll(true);
     refs.card.focus({ preventScroll: true });
-    track(source === AUTO_SOURCE ? 'popup_auto' : 'popup_open', source);
+    track(source === AUTO_SOURCE ? TRACK_ACTIONS.auto : TRACK_ACTIONS.open, source);
   };
 
   const close = (source, after) => {
@@ -280,7 +282,7 @@
     refs.popup.classList.remove(OPEN_CLASS);
     refs.popup.setAttribute('aria-hidden', 'true');
     refs.card.style.removeProperty('transform');
-    track('popup_close', source);
+    track(TRACK_ACTIONS.close, source);
     window.setTimeout(() => {
       refs.popup.classList.remove(VISIBLE_CLASS, CLOSING_CLASS);
       lockScroll(false);
