@@ -30,6 +30,10 @@
   const LABEL_WIDTH = 60;
   const ICON_SIZE = 12;
   const MARK_SIZE = 16;
+  const OPTION_IMAGE = { width: 44, height: 55 };
+  const OPTION_COLUMNS = 2;
+  const OPTION_GAP = 32;
+  const FADE_HEIGHT = 32;
   const LINE_IMAGE_HEIGHT = 160;
   const MOBILE_QUERY = '(max-width: 767px)';
   const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
@@ -51,6 +55,7 @@
   const SITE_CLOSE_CLASS = 'close-svg';
   const SITE_CLOSE_ICON_CLASS = 'close-x';
   const ACTIVATE_KEYS = ['Enter', ' '];
+  const ARROW_STEPS = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 };
   const MODES = { unlock: 'unlock', choose: 'choose' };
   const SOURCES = { bar: 'bar', line: 'line' };
   const LOG_LABEL = '[yokai-gifts]';
@@ -89,8 +94,9 @@
     lineControls: '.cart-line-qty',
     product: '[data-shopify-handle]',
     texture: '.news--lightbox-content',
-    focusable: 'button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])',
+    focusable: 'button:not([disabled]):not([tabindex="-1"]), [href], [tabindex]:not([tabindex="-1"])',
     action: '[data-bfg-pick], [data-bfg-choose], [data-bfg-open], [data-bfg-overview], [data-bfg-close]',
+    options: '.bfg-options',
     option: '.bfg-option',
     confirm: '.bfg-pop__cta[data-bfg-choose]'
   };
@@ -106,7 +112,6 @@
       choose: { small: 'Choose your free 9 mL perfume', large: 'Choose your free 30 mL perfume' },
       unlocked: { solid: "You've unlocked a free solid perfume", small: "You've unlocked a free 9 mL perfume", large: "You've unlocked a free 30 mL perfume" },
       added: "We've added it to your cart.",
-      pickLead: 'Select a scent, then add it to your cart.',
       pending: 'Choose your scent',
       style: 'EAU DE PARFUM',
       gift: 'Gift',
@@ -136,7 +141,6 @@
       choose: { small: 'ギフトの香水 9mL を選ぶ', large: 'ギフトの香水 30mL を選ぶ' },
       unlocked: { solid: '練り香水をプレゼント', small: '香水 9mL をプレゼント', large: '香水 30mL をプレゼント' },
       added: 'カートに追加しました。',
-      pickLead: '香りを選んで、カートに追加してください。',
       pending: '香りをお選びください',
       style: 'EAU DE PARFUM',
       gift: 'ギフト',
@@ -203,17 +207,20 @@
     .bfg-was{margin-right:.6em;opacity:.5}
     .bfg-free{color:${COLORS.terra}}
     .bfg-tag{font-size:14px;opacity:.6}
-    .bfg-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 24px}
-    .bfg-option{all:unset;box-sizing:border-box;position:relative;display:flex;align-items:center;gap:12px;min-width:0;padding:8px ${MARK_SIZE + 20}px 8px 8px;border:1px solid ${COLORS.track};cursor:pointer;transition:border-color .3s,background-color .3s}
-    .bfg-option:hover{border-color:${COLORS.hover}}
-    .bfg-option.${CURRENT_CLASS}{border-color:${COLORS.ink};background:${COLORS.wash}}
-    .bfg-option:focus-visible{outline:1px solid ${COLORS.ink};outline-offset:2px}
-    .bfg-option img{flex:none;width:48px;height:60px;object-fit:cover}
-    .bfg-option__name{min-width:0;font:400 14px/1.3 ${FONTS.title}}
-    .bfg-option__mark{position:absolute;top:50%;right:10px;box-sizing:border-box;width:${MARK_SIZE}px;height:${MARK_SIZE}px;margin-top:-${MARK_SIZE / 2}px;border:1px solid ${COLORS.hover};border-radius:50%;transition:border-color .3s}
+    .bfg-options{display:flex;align-items:flex-start;gap:0 ${OPTION_GAP}px;min-height:0;margin:0;padding:0 0 ${FADE_HEIGHT}px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;-webkit-mask-image:linear-gradient(#000 calc(100% - ${FADE_HEIGHT}px),transparent);mask-image:linear-gradient(#000 calc(100% - ${FADE_HEIGHT}px),transparent)}
+    .bfg-options__col{flex:1 1 0;min-width:0;border-top:1px solid ${COLORS.track}}
+    .bfg-option{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:14px;width:100%;padding:10px 4px 10px 0;border-bottom:1px solid ${COLORS.track};cursor:pointer}
+    .bfg-option:focus-visible{outline:1px solid ${COLORS.ink};outline-offset:-1px}
+    .bfg-option img{flex:none;width:${OPTION_IMAGE.width}px;height:${OPTION_IMAGE.height}px;object-fit:cover}
+    .bfg-option__text{flex:1;min-width:0}
+    .bfg-option__name{display:block;font:400 16px/1.3 ${FONTS.title}}
+    .bfg-option__family{display:block;margin-top:2px;font:400 11.5px/1.5 ${FONTS.text};letter-spacing:.06em;opacity:.6}
+    .bfg-option__mark{flex:none;position:relative;box-sizing:border-box;width:${MARK_SIZE}px;height:${MARK_SIZE}px;border:1px solid ${COLORS.hover};border-radius:50%;transition:border-color .3s}
     .bfg-option__mark::after{content:'';position:absolute;inset:3px;border-radius:50%;background:${COLORS.ink};transform:scale(0);transition:transform .3s ${EASE_OUT}}
-    .bfg-option.${CURRENT_CLASS} .bfg-option__mark{border-color:${COLORS.ink}}
+    .bfg-option:hover .bfg-option__mark,.bfg-option.${CURRENT_CLASS} .bfg-option__mark{border-color:${COLORS.ink}}
     .bfg-option.${CURRENT_CLASS} .bfg-option__mark::after{transform:scale(1)}
+    .bfg-pop.${CHOICE_CLASS} .bfg-pop__scroll{display:flex;flex-direction:column;overflow:hidden}
+    .bfg-pop.${CHOICE_CLASS} .bfg-pop__title,.bfg-pop.${CHOICE_CLASS} .bfg-pop__actions{flex:none}
     .bfg-gifts{list-style:none;margin:0 0 18px;padding:0;border-top:1px solid ${COLORS.track}}
     .bfg-gift{display:flex;align-items:center;gap:16px;margin:0;padding:14px 0;border-bottom:1px solid ${COLORS.track}}
     .bfg-gift__img{flex:none;width:56px;height:56px;object-fit:contain}
@@ -253,11 +260,11 @@
       .bfg-bar{margin-bottom:38px}
       .bfg-point__label{width:${LABEL_WIDTH}px;white-space:normal;font-size:11px;text-align:center}
       .bfg-point__wrap{display:block}
-      .bfg-options{gap:8px;margin-bottom:16px}
-      .bfg-option{flex-direction:column;gap:6px;padding:10px 6px 8px;text-align:center}
-      .bfg-option img{width:52px;height:65px}
-      .bfg-option__name{font-size:13px;line-height:1.25}
-      .bfg-option__mark{top:8px;right:8px;margin-top:0}
+      .bfg-options{display:block;margin:0 -20px;padding-left:20px;padding-right:20px}
+      .bfg-options__col + .bfg-options__col{border-top:0}
+      .bfg-pop.${CHOICE_CLASS} .bfg-pop__actions{flex-direction:column;align-items:stretch;gap:6px}
+      .bfg-pop.${CHOICE_CLASS} .bfg-pop__cta{flex:none}
+      .bfg-pop.${CHOICE_CLASS} .bfg-pop__later{align-self:center;padding:10px 4px 3px}
       .bfg-pop{align-items:flex-end}
       .bfg-pop .bfg-pop__card{width:100%;max-height:90vh;max-height:90dvh;opacity:1;transform:translateY(100%)}
       .bfg-pop.${OPEN_CLASS} .bfg-pop__card{transform:none}
@@ -392,11 +399,15 @@
   const shelf = () => {
     const stock = {};
     if (typeof window.getProduct !== 'function') return stock;
-    const handles = [...new Set([...document.querySelectorAll(SELECTORS.product)].map((node) => node.dataset.shopifyHandle).filter(Boolean))];
-    handles.forEach((handle, order) => {
+    const cards = {};
+    document.querySelectorAll(SELECTORS.product).forEach((node) => {
+      const handle = node.dataset.shopifyHandle;
+      if (handle && !cards[handle]) cards[handle] = node;
+    });
+    Object.keys(cards).forEach((handle, order) => {
       const product = window.getProduct(handle);
       if (product) product.variants.forEach((variant) => {
-        stock[variant.sku] = { available: variant.available, order };
+        stock[variant.sku] = { available: variant.available, order, family: cards[handle].dataset.fragranceType || '' };
       });
     });
     return stock;
@@ -621,14 +632,19 @@
   const pickerBody = (tier, mode) => {
     const line = giftLines(tier.key)[0];
     const items = options(tier);
+    const stock = shelf();
     const current = line ? items.find((item) => item.sku === line.sku) : null;
     state.pick = current ? current.variantId : '';
     const title = mode === MODES.unlock ? copy.unlocked[tier.key] : copy.choose[tier.key];
-    const buttons = items.map((item) => {
+    const label = line ? copy.update : copy.confirm;
+    const rows = items.map((item, index) => {
       const picked = item.variantId === state.pick;
-      return `<button type="button" role="radio" aria-checked="${picked ? 'true' : 'false'}" class="bfg-option${picked ? ` ${CURRENT_CLASS}` : ''}" data-bfg-pick="${escapeHtml(item.variantId)}"><img src="${escapeHtml(thumb(item.image))}" alt="" decoding="async"><span class="bfg-option__name">${escapeHtml(item.name)}</span><span class="bfg-option__mark" aria-hidden="true"></span></button>`;
-    }).join('');
-    return `<h2 class="bfg-pop__title" id="bfg-pop-title">${title}</h2><p class="bfg-pop__lead">${copy.pickLead}</p><div class="bfg-options" role="radiogroup" aria-label="${copy.choose[tier.key]}">${buttons}</div><div class="bfg-pop__actions"><button type="button" class="bfg-pop__cta" data-bfg-choose="${tier.key}"${state.pick ? '' : ' disabled'}>${line ? copy.update : copy.confirm}</button><button type="button" class="bfg-pop__later" data-bfg-close="later">${line ? copy.close : copy.later}</button></div>`;
+      const family = (stock[item.base] || {}).family;
+      return `<button type="button" role="radio" aria-checked="${picked ? 'true' : 'false'}" tabindex="${picked || (!state.pick && index === 0) ? 0 : -1}" class="bfg-option${picked ? ` ${CURRENT_CLASS}` : ''}" data-bfg-pick="${escapeHtml(item.variantId)}"><img src="${escapeHtml(thumb(item.image))}" alt="" decoding="async"><span class="bfg-option__text"><span class="bfg-option__name">${escapeHtml(item.name)}</span>${family ? `<span class="bfg-option__family">${escapeHtml(family)}</span>` : ''}</span><span class="bfg-option__mark" aria-hidden="true"></span></button>`;
+    });
+    const split = Math.ceil(rows.length / OPTION_COLUMNS);
+    const columns = [rows.slice(0, split), rows.slice(split)].filter((part) => part.length).map((part) => `<div class="bfg-options__col" role="presentation">${part.join('')}</div>`).join('');
+    return `<h2 class="bfg-pop__title" id="bfg-pop-title">${title}</h2><div class="bfg-options" role="radiogroup" aria-label="${copy.choose[tier.key]}">${columns}</div><div class="bfg-pop__actions"><button type="button" class="bfg-pop__cta" data-bfg-choose="${tier.key}" data-bfg-label="${label}"${state.pick ? '' : ' disabled'}>${state.pick ? label : copy.pending}</button><button type="button" class="bfg-pop__later" data-bfg-close="later">${line ? copy.close : copy.later}</button></div>`;
   };
 
   const giftState = (tier, paid) => {
@@ -651,6 +667,9 @@
     refs.popupBody.innerHTML = html;
     refs.popupBody.scrollTop = 0;
     refs.popup.classList.toggle(CHOICE_CLASS, choice);
+    const current = refs.popupBody.querySelector(`${SELECTORS.option}.${CURRENT_CLASS}`);
+    const list = current && current.closest(SELECTORS.options);
+    if (list) list.scrollTop = current.offsetTop - list.offsetTop - (list.clientHeight - current.offsetHeight) / 2;
     if (!switching) {
       state.returnFocus = document.activeElement;
       refs.popup.classList.add(VISIBLE_CLASS);
@@ -741,9 +760,12 @@
       const picked = option.getAttribute('data-bfg-pick') === variantId;
       option.classList.toggle(CURRENT_CLASS, picked);
       option.setAttribute('aria-checked', picked ? 'true' : 'false');
+      option.tabIndex = picked ? 0 : -1;
     });
     const confirm = refs.popupBody.querySelector(SELECTORS.confirm);
-    if (confirm) confirm.disabled = false;
+    if (!confirm) return;
+    confirm.disabled = false;
+    confirm.textContent = confirm.getAttribute('data-bfg-label');
   };
 
   const choose = (key) => {
@@ -791,6 +813,15 @@
     if (event.key === 'Escape') {
       event.stopPropagation();
       closePopup();
+      return;
+    }
+    const radio = event.target.closest && event.target.closest(SELECTORS.option);
+    if (radio && ARROW_STEPS[event.key]) {
+      event.preventDefault();
+      const radios = [...refs.popupBody.querySelectorAll(SELECTORS.option)];
+      const next = radios[(radios.indexOf(radio) + ARROW_STEPS[event.key] + radios.length) % radios.length];
+      pick(next.getAttribute('data-bfg-pick'));
+      next.focus();
       return;
     }
     if (event.key !== 'Tab') return;
