@@ -23,6 +23,10 @@
   const HOST_POLL_INTERVAL = 250;
   const HOST_POLL_LIMIT = 80;
   const HOST_RENDER_TIMEOUT = 5000;
+  const REQUEST_TIMEOUT = 10000;
+  const RETRY = { limit: 3, delay: 3000 };
+  const CATALOG_RETRY = { limit: 3, delay: 2000 };
+  const CAMPAIGN_END = Date.parse('2026-12-25T23:59:59+09:00');
   const THUMB_WIDTH = 240;
   const CLOSE_CLEARANCE = 72;
   const POINT_SIZE = 22;
@@ -59,6 +63,8 @@
   const MODES = { unlock: 'unlock', choose: 'choose' };
   const SOURCES = { bar: 'bar', line: 'line' };
   const LOG_LABEL = '[yokai-gifts]';
+  const REQUEST_ERROR = 'storefront request failed';
+  const CATALOG_ERROR = 'gift catalog is empty';
   const EASE_OUT = 'cubic-bezier(0.16, 1, 0.3, 1)';
   const EASE_IN = 'cubic-bezier(0.7, 0, 0.84, 0)';
   const COLORS = { terra: '#A5512F', ink: '#1F1D21', cream: '#F5EFE1', track: 'rgba(31, 29, 33, 0.15)', hover: 'rgba(31, 29, 33, 0.35)', wash: 'rgba(31, 29, 33, 0.05)', backdrop: 'rgba(20, 16, 18, 0.5)' };
@@ -105,13 +111,13 @@
     en: {
       begin: (count, gift) => `Buy ${count} perfumes for a free ${gift}`,
       more: (count, gift) => `${count} more ${count === 1 ? 'perfume' : 'perfumes'} for a free ${gift}`,
-      complete: 'You have all the gifts',
+      complete: "You've got all the gifts",
       rail: { solid: ['Solid', 'perfume'], small: ['9 mL', 'perfume'], large: ['30 mL', 'perfume'] },
       names: { solid: 'Solid perfume', small: '9 mL perfume', large: '30 mL perfume' },
       inline: { solid: 'solid perfume', small: '9 mL perfume', large: '30 mL perfume' },
       choose: { small: 'Choose your free 9 mL perfume', large: 'Choose your free 30 mL perfume' },
       unlocked: { solid: "You've unlocked a free solid perfume", small: "You've unlocked a free 9 mL perfume", large: "You've unlocked a free 30 mL perfume" },
-      added: "We've added it to your cart.",
+      added: "We've added it to your cart",
       pending: 'Choose your scent',
       style: 'EAU DE PARFUM',
       gift: 'Gift',
@@ -127,7 +133,8 @@
       rule: (buy) => `Free when you buy ${buy} perfumes`,
       remaining: (count) => `${count} more ${count === 1 ? 'perfume' : 'perfumes'}`,
       inCart: 'In your cart',
-      terms: 'Any size counts. Gifts add up. One set of gifts per order, while supplies last.',
+      terms: 'Any size counts. Gifts are cumulative. One set of gifts per order, while supplies last.',
+      solidDetail: 'Sandalwood, 8 g',
       see: 'See the gifts',
       solidNote: 'Preview: no stock at the online shipping location yet.'
     },
@@ -138,25 +145,26 @@
       rail: { solid: ['練り香水'], small: ['香水 9mL'], large: ['香水 30mL'] },
       names: { solid: '練り香水', small: '香水 9mL', large: '香水 30mL' },
       inline: { solid: '練り香水', small: '香水 9mL', large: '香水 30mL' },
-      choose: { small: 'ギフトの香水 9mL を選ぶ', large: 'ギフトの香水 30mL を選ぶ' },
-      unlocked: { solid: '練り香水をプレゼント', small: '香水 9mL をプレゼント', large: '香水 30mL をプレゼント' },
-      added: 'カートに追加しました。',
+      choose: { small: 'ギフトの香水 9mLを選ぶ', large: 'ギフトの香水 30mLを選ぶ' },
+      unlocked: { solid: '練り香水をプレゼント', small: '香水 9mLをプレゼント', large: '香水 30mLをプレゼント' },
+      added: 'カートに追加しました',
       pending: '香りをお選びください',
       style: 'EAU DE PARFUM',
       gift: 'ギフト',
       free: '無料',
       pick: '香りを選ぶ',
       change: '変更',
-      confirm: 'カートに追加',
+      confirm: 'カートに入れる',
       update: 'ギフトを変更',
       later: 'あとで選ぶ',
       proceed: 'お買い物を続ける',
       close: '閉じる',
       overview: 'ブラックフライデー ギフト',
       rule: (buy) => `香水${buy}本のご購入でプレゼント`,
-      remaining: (count) => `あと${count}本`,
+      remaining: (count) => `香水あと${count}本`,
       inCart: 'カートに追加済み',
-      terms: 'サイズを問わず対象・ギフトは重ねてお受け取りいただけます。1回のご注文につき1セット・なくなり次第終了。',
+      terms: 'サイズを問わず対象です。ギフトは重ねてお受け取りいただけます。1回のご注文につき1セット、なくなり次第終了です。',
+      solidDetail: '白檀 8g',
       see: 'ギフトを見る',
       solidNote: 'プレビュー：オンライン出荷拠点に在庫がありません。'
     }
@@ -174,7 +182,7 @@
 
   const copy = COPY[JA_PATH_PATTERN.test(window.location.pathname) ? 'ja' : 'en'];
   const reducedMotion = window.matchMedia(REDUCED_MOTION_QUERY);
-  const state = { ready: false, busy: false, lines: [], gifts: {}, charged: [], blocked: new Set(), catalog: { solid: null, small: [], large: [] }, signature: '', snapshotPaid: 0, failed: new Set(), loading: '', hostTotal: 0, lastPaid: null, queue: [], popup: null, pick: '', returnFocus: null, scrollLocked: false, resumeScroll: false, messageHtml: '', expect: { present: [], absent: [] }, waiters: [] };
+  const state = { ready: false, busy: false, lines: [], gifts: {}, charged: [], blocked: new Set(), catalog: { solid: null, small: [], large: [] }, signature: '', snapshotPaid: 0, failed: new Set(), loading: '', hostTotal: 0, lastPaid: null, queue: [], popup: null, pick: '', returnFocus: null, scrollLocked: false, resumeScroll: false, messageHtml: '', retries: 0, waiters: [] };
   const refs = {};
 
   const css = `
@@ -295,11 +303,19 @@
     return node;
   };
 
-  const request = (query, variables) => window.fetch(STOREFRONT.endpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-Shopify-Storefront-Access-Token': STOREFRONT.token },
-    body: JSON.stringify({ query, variables })
-  }).then((response) => response.json()).then((payload) => payload.data || {});
+  const request = (query, variables) => {
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+    return window.fetch(STOREFRONT.endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Shopify-Storefront-Access-Token': STOREFRONT.token },
+      body: JSON.stringify({ query, variables }),
+      signal: controller.signal
+    }).then((response) => response.json()).then((payload) => {
+      if (!payload.data) throw new Error(REQUEST_ERROR);
+      return payload.data;
+    }).finally(() => window.clearTimeout(timer));
+  };
 
   const cartId = () => window.localStorage.getItem(CART_KEY);
 
@@ -343,19 +359,24 @@
     if (!cart) return gifts;
     cart.lines.edges.forEach(({ node }) => {
       const attribute = node.attributes.find((item) => item.key === GIFT_ATTRIBUTE);
-      if (attribute) gifts.push({ lineId: node.id, key: attribute.value, variantId: node.merchandise.id, sku: node.merchandise.sku || '', charged: Number(node.cost.totalAmount.amount) > 0 });
+      if (attribute) gifts.push({ lineId: node.id, key: attribute.value, variantId: node.merchandise.id, sku: node.merchandise.sku || '', quantity: node.quantity, charged: Number(node.cost.totalAmount.amount) > 0 });
     });
     return gifts;
   };
 
   const adopt = (cart) => {
     const nodes = cart ? cart.lines.edges.map(({ node }) => node) : [];
+    const gifts = snapshotGifts(cart);
+    const units = {};
+    gifts.forEach((gift) => {
+      units[gift.key] = (units[gift.key] || 0) + gift.quantity;
+    });
     state.gifts = {};
     state.charged = [];
-    snapshotGifts(cart).forEach((gift) => {
+    gifts.forEach((gift) => {
       state.gifts[gift.lineId] = gift.key;
       const tier = tierOf(gift.key);
-      if (gift.charged && tier && tier.skuPattern.test(gift.sku)) state.charged.push(gift.key);
+      if (gift.charged && tier && tier.skuPattern.test(gift.sku) && units[gift.key] === 1) state.charged.push(gift.key);
     });
     state.signature = signatureOf(nodes);
     state.snapshotPaid = nodes.filter((node) => !state.gifts[node.id] && PAID_SKU_PATTERN.test(node.merchandise.sku || '')).reduce((sum, node) => sum + node.quantity, 0);
@@ -419,8 +440,10 @@
     return state.catalog[tier.key].filter((item) => item.available && !state.failed.has(item.variantId) && stock[item.base] && stock[item.base].available).sort((a, b) => stock[a.base].order - stock[b.base].order);
   };
 
+  const ended = () => Date.now() > CAMPAIGN_END;
+
   const offered = (tier) => {
-    if (state.blocked.has(tier.key)) return false;
+    if (ended() || state.blocked.has(tier.key)) return false;
     if (tier.choice) return options(tier).length > 0;
     return Boolean(state.catalog.solid) && (state.catalog.solid.available || PREVIEW);
   };
@@ -431,18 +454,29 @@
     return options(tier).find((option) => option.variantId === choice) || null;
   };
 
+  const gone = (tier, line) => {
+    if (!tier.choice) return Boolean(state.catalog.solid) && !state.catalog.solid.available;
+    const item = state.catalog[tier.key].find((entry) => entry.sku === line.sku);
+    const stock = shelf();
+    return Boolean(item) && (!item.available || Boolean(stock[item.base] && !stock[item.base].available));
+  };
+
   const plan = () => {
     const paid = paidCount();
     const actions = [];
     state.lines.filter((line) => state.gifts[line.id] && !validGift(line)).forEach((line) => actions.push({ type: 'remove', lineId: line.id }));
     TIERS.forEach((tier) => {
       const lines = giftLines(tier.key);
-      if (paid < tier.buy || state.blocked.has(tier.key)) {
+      if (paid < tier.buy || state.blocked.has(tier.key) || ended()) {
         lines.forEach((line) => actions.push({ type: 'remove', lineId: line.id }));
         return;
       }
       lines.slice(1).forEach((line) => actions.push({ type: 'remove', lineId: line.id }));
       const current = lines[0];
+      if (current && gone(tier, current)) {
+        actions.push({ type: 'remove', lineId: current.id });
+        return;
+      }
       const target = wanted(tier);
       if (!current) {
         if (target) actions.push({ type: 'add', tier, variantId: target.variantId });
@@ -484,12 +518,6 @@
         state.catalog.solid.available = false;
       }
     });
-    state.expect = { present: gifts.map((gift) => gift.lineId), absent: actions.filter((action) => action.type === 'remove').map((action) => action.lineId) };
-  };
-
-  const settled = () => {
-    const ids = new Set(state.lines.map((line) => line.id));
-    return state.expect.present.every((id) => ids.has(id)) && state.expect.absent.every((id) => !ids.has(id));
   };
 
   const refreshHost = () => new Promise((resolve) => {
@@ -559,7 +587,7 @@
     const title = node.querySelector(SELECTORS.lineTitle);
     if (title) title.textContent = tier.choice ? title.textContent.replace(GIFT_TITLE_PATTERN, '') : copy.names[tier.key];
     const style = node.querySelector(SELECTORS.lineStyle);
-    if (style && !tier.choice) style.textContent = line.name;
+    if (style && !tier.choice) style.textContent = copy.solidDetail;
     const variant = node.querySelector(SELECTORS.lineVariant);
     [...(variant ? variant.children : [])].filter((part) => part.textContent.trim() === DEFAULT_VARIANT_TITLE).forEach((part) => {
       const next = part.nextElementSibling;
@@ -649,16 +677,16 @@
 
   const giftState = (tier, paid) => {
     if (paid < tier.buy) return `<span class="bfg-gift__state ${MUTED_CLASS}">${copy.remaining(tier.buy - paid)}</span>`;
-    if (!tier.choice) return `<span class="bfg-gift__state">${copy.inCart}</span>`;
     const line = giftLines(tier.key)[0];
+    if (!tier.choice) return line ? `<span class="bfg-gift__state">${copy.inCart}</span>` : '';
     const action = `<button type="button" class="bfg-gift__action" data-bfg-open="${tier.key}">${line ? copy.change : copy.pick}</button>`;
     return `<span class="bfg-gift__state">${line ? `<span class="bfg-gift__value">${escapeHtml(line.name)}</span>` : ''}${action}</span>`;
   };
 
   const overviewBody = () => {
     const paid = paidCount();
-    const rows = TIERS.map((tier) => `<li class="bfg-gift"><img class="bfg-gift__img" src="${GIFT_IMAGES[tier.key]}" alt=""><span class="bfg-gift__text"><span class="bfg-gift__name">${copy.names[tier.key]}</span><span class="bfg-gift__rule">${copy.rule(tier.buy)}</span></span>${giftState(tier, paid)}</li>`).join('');
-    return `<h2 class="bfg-pop__title" id="bfg-pop-title">${copy.overview}</h2><ul class="bfg-gifts">${rows}</ul><p class="bfg-pop__note">${copy.terms}</p><div class="bfg-pop__actions"><button type="button" class="bfg-pop__cta" data-bfg-close="proceed">${copy.proceed}</button></div>`;
+    const rows = TIERS.filter((tier) => offered(tier) || giftLines(tier.key).length).map((tier) => `<li class="bfg-gift"><img class="bfg-gift__img" src="${GIFT_IMAGES[tier.key]}" alt=""><span class="bfg-gift__text"><span class="bfg-gift__name">${copy.names[tier.key]}</span><span class="bfg-gift__rule">${copy.rule(tier.buy)}</span></span>${giftState(tier, paid)}</li>`).join('');
+    return `<h2 class="bfg-pop__title" id="bfg-pop-title">${copy.overview}</h2><ul class="bfg-gifts">${rows}</ul><p class="bfg-pop__note">${copy.terms}</p><div class="bfg-pop__actions"><button type="button" class="bfg-pop__cta" data-bfg-close="proceed">${copy.close}</button></div>`;
   };
 
   const present = (key, html, choice) => {
@@ -722,31 +750,50 @@
     openNext();
   };
 
+  const inSync = () => state.signature === signatureOf(state.lines);
+
+  const sync = async () => {
+    if (inSync()) return true;
+    adopt(await loadCart());
+    block();
+    if (inSync()) return true;
+    await refreshHost();
+    return inSync();
+  };
+
+  const retry = () => {
+    if (state.retries >= RETRY.limit) return;
+    state.retries += 1;
+    window.setTimeout(() => window.Cart.init(), RETRY.delay * state.retries);
+  };
+
   const reconcile = async () => {
     if (!state.ready || state.busy) return;
     state.busy = true;
     try {
-      let audited = false;
       for (let round = 0; round < MAX_ROUNDS; round += 1) {
-        const actions = plan();
-        if (actions.length) {
-          const cart = await apply(actions);
-          if (!cart) break;
-          adopt(cart);
-          verify(actions, cart);
-          block();
-          audited = false;
-          await refreshHost();
-        } else if (!audited && state.signature !== signatureOf(state.lines)) {
-          adopt(await loadCart());
-          block();
-          audited = true;
-        } else {
+        if (!(await sync())) {
+          retry();
           break;
         }
+        const actions = plan();
+        if (!actions.length) {
+          state.retries = 0;
+          break;
+        }
+        const cart = await apply(actions);
+        if (!cart) {
+          retry();
+          break;
+        }
+        adopt(cart);
+        verify(actions, cart);
+        block();
+        await refreshHost();
       }
     } catch (error) {
       window.console.warn(LOG_LABEL, error);
+      retry();
     } finally {
       state.busy = false;
       state.loading = '';
@@ -784,7 +831,7 @@
     state.hostTotal = parseYen(total && total.textContent);
     const paid = paidCount();
     paint();
-    if (settled()) state.waiters.splice(0).forEach((resolve) => resolve());
+    state.waiters.splice(0).forEach((resolve) => resolve());
     if (state.lastPaid !== null && paid > state.lastPaid) announce(state.lastPaid, paid);
     state.lastPaid = paid;
     reconcile();
@@ -890,8 +937,18 @@
         else catalog[tier.key] = item;
       });
     });
+    if (!catalog.solid && !catalog.small.length && !catalog.large.length) throw new Error(CATALOG_ERROR);
     return catalog;
   });
+
+  const retryCatalog = (attempt) => {
+    if (attempt > CATALOG_RETRY.limit || ended()) return;
+    window.setTimeout(() => loadCatalog().then((catalog) => {
+      state.catalog = catalog;
+      paint();
+      reconcile();
+    }).catch(() => retryCatalog(attempt + 1)), CATALOG_RETRY.delay * attempt);
+  };
 
   const start = async () => {
     refs.list = document.querySelector(SELECTORS.list);
@@ -908,16 +965,13 @@
     document.addEventListener('click', onClick);
     document.addEventListener('keydown', onKeydown, true);
     window.addEventListener('shopify-products-ready', onProductsReady);
-    try {
-      const [cart, catalog] = await Promise.all([loadCart(), loadCatalog()]);
-      adopt(cart);
-      block();
-      state.catalog = catalog;
-    } catch (error) {
-      window.console.warn(LOG_LABEL, error);
-    }
+    const [cart, catalog] = await Promise.all([loadCart().catch(() => null), loadCatalog().catch(() => null)]);
+    adopt(cart);
+    block();
+    if (catalog) state.catalog = catalog;
     state.ready = true;
     onHostRender();
+    if (!catalog) retryCatalog(1);
   };
 
   const whenHostReady = (callback, attempt = 0) => {

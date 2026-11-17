@@ -1,5 +1,6 @@
 (() => {
   const CAMPAIGN_ID = 'bf2026';
+  const CAMPAIGN_END = Date.parse('2026-12-25T23:59:59+09:00');
   const LOADING_CLASS = 'is-loading';
   const VISIBLE_CLASS = 'is-visible';
   const OPEN_CLASS = 'is-open';
@@ -62,15 +63,15 @@
     ja: {
       name: 'BLACK FRIDAY',
       dates: '11.11 – 12.25',
-      barLine: 'オンラインストア・店舗で、香水のご購入にギフト',
+      barLine: 'オンラインストア・店舗にて、香水のご購入でギフト',
       barMore: '詳しく見る',
-      lead: '期間中、オンラインストアと店舗で、香水のご購入本数に応じてギフトをお贈りします。',
+      lead: '期間中、オンラインストアと店舗で、香水のご購入本数に応じて、ギフトをお贈りします。',
       gifts: [
         { buy: '香水2本ご購入で', name: '練り香水', mark: '※', image: 'solid', compact: true },
         { buy: '香水3本ご購入で', name: '香水 9mL', image: 'small', compact: false },
         { buy: '香水5本ご購入で', name: '香水 30mL', image: 'large', compact: false }
       ],
-      note: 'サイズを問わず対象・ギフトは重ねてお受け取りいただけます。<br>オンラインストア・店舗共通・なくなり次第終了<br>※練り香水は在庫に限りがあるため、なくなり次第終了いたします。',
+      note: 'サイズを問わず対象です。ギフトは重ねてお受け取りいただけます。<br>オンラインストア・店舗共通、なくなり次第終了です。<br>※練り香水は在庫に限りがあるため、なくなり次第終了いたします。',
       cta: '香水を見る',
       ctaStores: '店舗を探す',
       close: '閉じる'
@@ -80,13 +81,13 @@
       dates: '11.11 – 12.25',
       barLine: 'Gifts with purchase, online and in store',
       barMore: 'See the gifts',
-      lead: 'Buy perfume online or at our stores and receive a gift, depending on how many you buy.',
+      lead: 'Buy perfume online or in store and receive gifts, depending on how many you buy.',
       gifts: [
         { buy: 'Buy 2 perfumes', name: 'Free <span class="bf-pop__gift-item">solid perfume<span class="bf-pop__gift-mark">*</span></span>', image: 'solid', compact: true },
         { buy: 'Buy 3 perfumes', name: 'Free <span class="bf-pop__gift-item">9 mL perfume</span>', image: 'small', compact: false },
         { buy: 'Buy 5 perfumes', name: 'Free <span class="bf-pop__gift-item">30 mL perfume</span>', image: 'large', compact: false }
       ],
-      note: 'Any size counts. Gifts are cumulative.<br>Online and in store. While supplies last.<br>*Solid perfume stock is limited and ends when it runs out.',
+      note: 'Any size counts. Gifts are cumulative.<br>Online and in store. While supplies last.<br>*Solid perfume stock is limited. The gift ends when it runs out.',
       cta: 'Shop perfumes',
       ctaStores: 'Find a store',
       close: 'Close'
@@ -405,6 +406,7 @@
   };
 
   const start = () => {
+    if (Date.now() > CAMPAIGN_END) return;
     injectStyles();
     renderBar();
     renderPopup();
