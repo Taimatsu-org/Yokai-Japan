@@ -3,6 +3,12 @@
   var API = "https://yokai-sake.myshopify.com/api/2025-01/graphql.json";
   var TOKEN = "1432a4269f2a938b1e58ab4c6b49138a";
   var KEY = "yokai_cart_id";
+  var REF_KEY = "yokai_ref";
+  var REF_PARAMS = ["ref", "aff"];
+  var REF_CLEAR_PARAM = "noref";
+  var REF_ATTRIBUTE = "__ref";
+  var REF_LIFETIME = 604800000;
+  var REF_PATTERN = /^[\w.-]{1,64}$/;
 
   // ---- i18n（路徑第一段是 ja 就用日文，否則英文） ----
   var IS_JA = window.location.pathname.split("/").filter(Boolean)[0] === "ja";
@@ -33,6 +39,7 @@
 
   var CART_FIELDS = `
   id checkoutUrl totalQuantity
+  attributes { key value }
   cost { subtotalAmount { amount } }
   lines(first: 50) { edges { node {
     id quantity
@@ -190,13 +197,67 @@
     render();
   }
 
+  var queue = Promise.resolve();
+
+  function mutate(query, variables) {
+    var run = queue.then(function () {
+      return gql(query, variables);
+    });
+    queue = run.catch(function () {});
+    return run;
+  }
+
+  function readRef() {
+    try {
+      var saved = JSON.parse(localStorage.getItem(REF_KEY) || "null");
+      return saved && Date.now() - saved.time < REF_LIFETIME ? saved.code : "";
+    } catch (e) {
+      return "";
+    }
+  }
+
+  function refAttributes() {
+    var code = readRef();
+    return code ? [{ key: REF_ATTRIBUTE, value: code }] : [];
+  }
+
+  function captureRef() {
+    var params = new URLSearchParams(window.location.search);
+    if (params.has(REF_CLEAR_PARAM)) return localStorage.removeItem(REF_KEY);
+    var code = REF_PARAMS.map(function (name) {
+      return params.get(name);
+    }).find(Boolean);
+    if (code && REF_PATTERN.test(code))
+      localStorage.setItem(
+        REF_KEY,
+        JSON.stringify({ code: code, time: Date.now() }),
+      );
+  }
+
+  function tagRef(c) {
+    if (!c) return;
+    var tagged = (c.attributes || []).find(function (a) {
+      return a.key === REF_ATTRIBUTE;
+    });
+    if ((tagged ? tagged.value : "") === readRef()) return;
+    mutate(
+      `mutation($c:ID!,$a:[AttributeInput!]!){cartAttributesUpdate(cartId:$c,attributes:$a){cart{${CART_FIELDS}}}}`,
+      { c: c.id, a: refAttributes() },
+    ).then(function (d) {
+      var next = d?.data?.cartAttributesUpdate?.cart;
+      if (next) save(next);
+    });
+  }
+
+  captureRef();
+
   window.Cart = {
     add: function (variantId) {
       if (!variantId) return;
       var id = localStorage.getItem(KEY);
       var self = this;
       var p = id
-        ? gql(
+        ? mutate(
             `mutation($c:ID!,$l:[CartLineInput!]!){cartLinesAdd(cartId:$c,lines:$l){cart{${CART_FIELDS}}}}`,
             { c: id, l: [{ merchandiseId: variantId, quantity: 1 }] },
           ).then(function (d) {
@@ -210,12 +271,13 @@
         if (c) {
           save(c);
           self.open();
+          tagRef(c);
           return;
         }
         localStorage.removeItem(KEY);
-        return gql(
-          `mutation($l:[CartLineInput!]!){cartCreate(input:{lines:$l}){cart{${CART_FIELDS}}}}`,
-          { l: [{ merchandiseId: variantId, quantity: 1 }] },
+        return mutate(
+          `mutation($l:[CartLineInput!]!,$a:[AttributeInput!]){cartCreate(input:{lines:$l,attributes:$a}){cart{${CART_FIELDS}}}}`,
+          { l: [{ merchandiseId: variantId, quantity: 1 }], a: refAttributes() },
         ).then(function (d) {
           var c2 = d?.data?.cartCreate?.cart;
           if (c2) {
@@ -228,7 +290,7 @@
     setQty: function (lineId, q) {
       if (q < 1) return this.remove(lineId);
       var id = localStorage.getItem(KEY);
-      gql(
+      mutate(
         `mutation($c:ID!,$l:[CartLineUpdateInput!]!){cartLinesUpdate(cartId:$c,lines:$l){cart{${CART_FIELDS}}}}`,
         { c: id, l: [{ id: lineId, quantity: q }] },
       ).then(function (d) {
@@ -238,7 +300,7 @@
     },
     remove: function (lineId) {
       var id = localStorage.getItem(KEY);
-      gql(
+      mutate(
         `mutation($c:ID!,$l:[ID!]!){cartLinesRemove(cartId:$c,lineIds:$l){cart{${CART_FIELDS}}}}`,
         { c: id, l: [lineId] },
       ).then(function (d) {
@@ -262,6 +324,7 @@
         function (d) {
           if (!d?.data) return;
           save(d.data.cart || null);
+          tagRef(d.data.cart);
         },
       );
     },
