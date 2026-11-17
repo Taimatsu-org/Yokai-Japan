@@ -1,7 +1,4 @@
 (() => {
-  const PREVIEW_HOST_PATTERN = /\.webflow\.io$/;
-  const PREVIEW = PREVIEW_HOST_PATTERN.test(window.location.hostname);
-
   const STOREFRONT = { endpoint: 'https://yokai-sake.myshopify.com/api/2025-01/graphql.json', token: '1432a4269f2a938b1e58ab4c6b49138a' };
   const CART_KEY = 'yokai_cart_id';
   const STORE_KEY = 'yokai_bf2026_gifts';
@@ -135,8 +132,7 @@
       inCart: 'In your cart',
       terms: 'Any size counts. Gifts are cumulative. One set of gifts per order, while supplies last.',
       solidDetail: 'Sandalwood, 8 g',
-      see: 'See the gifts',
-      solidNote: 'Preview: no stock at the online shipping location yet.'
+      see: 'See the gifts'
     },
     ja: {
       begin: (count, gift) => `香水${count}本で、${gift}をプレゼント`,
@@ -165,8 +161,7 @@
       inCart: 'カートに追加済み',
       terms: 'サイズを問わず対象です。ギフトは重ねてお受け取りいただけます。1回のご注文につき1セット、なくなり次第終了です。',
       solidDetail: '白檀 8g',
-      see: 'ギフトを見る',
-      solidNote: 'プレビュー：オンライン出荷拠点に在庫がありません。'
+      see: 'ギフトを見る'
     }
   };
 
@@ -445,7 +440,7 @@
   const offered = (tier) => {
     if (ended() || state.blocked.has(tier.key)) return false;
     if (tier.choice) return options(tier).length > 0;
-    return Boolean(state.catalog.solid) && (state.catalog.solid.available || PREVIEW);
+    return Boolean(state.catalog.solid) && state.catalog.solid.available;
   };
 
   const wanted = (tier) => {
@@ -604,23 +599,21 @@
   };
 
   const placeholder = (tier) => {
-    const sample = tier.choice ? options(tier)[0] : state.catalog.solid;
-    const detail = tier.choice ? `<p class="cart-line-purfume-style">${copy.style}</p><p class="cart-line-variant"><span>${copy.pending}</span></p>` : `<p class="cart-line-purfume-style">${copy.solidNote}</p>`;
+    const sample = options(tier)[0];
+    const detail = `<p class="cart-line-purfume-style">${copy.style}</p><p class="cart-line-variant"><span>${copy.pending}</span></p>`;
     const node = element('div', `${NODE_CLASS} cart-line ${LINE_CLASS}`, `<img class="cart-line-img bfg-gift-img" src="${GIFT_IMAGES[tier.key]}" alt=""><div class="cart-line-info"><div class="cart-line-info-wrapper"><div class="cart-line-title-and-price"><p class="cart-line-title">${copy.names[tier.key]}</p><p class="cart-line-price">${priceHtml(sample ? sample.price : 0)}</p></div>${detail}</div><div class="cart-line-qty">${controls(tier, copy.pick)}</div></div>`);
     node.setAttribute('data-bfg-overview', SOURCES.line);
     if (state.loading === tier.key) node.classList.add(BUSY_CLASS);
     return node;
   };
 
-  const pendingStock = (tier) => PREVIEW && !tier.choice && offered(tier) && !state.catalog.solid.available;
-
   const paintLines = (paid) => {
     refs.list.querySelectorAll(`.${NODE_CLASS}`).forEach((node) => node.remove());
     state.lines.filter((line) => state.gifts[line.id]).forEach((line) => line.el.remove());
-    TIERS.filter((tier) => paid >= tier.buy).forEach((tier) => {
+    TIERS.filter((tier) => paid >= tier.buy && !state.blocked.has(tier.key) && !ended()).forEach((tier) => {
       const line = giftLines(tier.key)[0];
       if (line) refs.list.appendChild(decorate(line, tier));
-      else if (tier.choice ? offered(tier) : pendingStock(tier)) refs.list.appendChild(placeholder(tier));
+      else if (tier.choice && offered(tier)) refs.list.appendChild(placeholder(tier));
     });
   };
 
@@ -720,9 +713,13 @@
     track(TRACK_ACTIONS.view, source);
   };
 
+  const awaited = (tier) => !tier.choice && offered(tier) && paidCount() >= tier.buy && !giftLines(tier.key).length;
+
   const openNext = () => {
     while (!state.popup && state.queue.length) {
-      const tier = tierOf(state.queue.shift());
+      const tier = tierOf(state.queue[0]);
+      if (awaited(tier)) return;
+      state.queue.shift();
       if (paidCount() >= tier.buy && openGift(tier, MODES.unlock)) {
         markSeen(tier.key);
         track(TRACK_ACTIONS.unlock, tier.key);
@@ -833,6 +830,7 @@
     paint();
     state.waiters.splice(0).forEach((resolve) => resolve());
     if (state.lastPaid !== null && paid > state.lastPaid) announce(state.lastPaid, paid);
+    else openNext();
     state.lastPaid = paid;
     reconcile();
   };
