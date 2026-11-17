@@ -61,7 +61,7 @@
   const COPY = {
     ja: {
       name: 'BLACK FRIDAY',
-      dates: '11.11 – 11.30',
+      dates: '11.11 – 12.25',
       barLine: 'オンラインストア・店舗で、香水のご購入にギフト',
       barMore: '詳しく見る',
       lead: '期間中、オンラインストアと店舗で、香水のご購入本数に応じてギフトをお贈りします。',
@@ -77,7 +77,7 @@
     },
     en: {
       name: 'BLACK FRIDAY',
-      dates: '11.11 – 11.30',
+      dates: '11.11 – 12.25',
       barLine: 'Gifts with purchase, online and in store',
       barMore: 'See the gifts',
       lead: 'Buy perfume online or at our stores and receive a gift, depending on how many you buy.',
